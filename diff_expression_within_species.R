@@ -44,6 +44,13 @@ row.names(ple_counts)<- ple_geneid
 con_groups<-c('A','A','A','B','B','B','C','C','C','D','D','D','E','E','F','F','F')
 ple_groups<-c('G','G','G','H','H','H','I','I','I','J','J','K','K','K','L','L','L')
 
+# import file that has transcript IDs and the GO terms mapping to them to be used after topTags later
+con_go<-read_tsv("/Users/katie/Desktop/Bg/begonia_duplicate_expression/con_go_annotations_trans.txt")
+ple_go<-read_tsv("/Users/katie/Desktop/Bg/begonia_duplicate_expression/ple_go_annotations_trans.txt")
+colnames(con_go)<-c("transcript_id", "GO_terms")
+colnames(ple_go)<-c("transcript_id", "GO_terms")
+
+
 # create DGE list
 # keep only rows where counts per million is above 100 in at least 2 samples
 # calculate normalisation factors
@@ -58,6 +65,48 @@ con_d<-calcNormFactors(con_d, method="TMM")
 plotMDS(con_d, method="bcv", col=as.numeric(con_d$samples$group))
 con_d<-estimateCommonDisp(con_d)
 con_d<-estimateTagwiseDisp(con_d, prior.n = 4)
+
+
+#A = female flower
+#B = leaf
+#C = male flower
+#D = petiole
+#E = root
+#F = vegetative bud
+
+con_fflower_v_leaf_et <- exactTest(con_d, pair=c("A","B"))
+con_fflower_v_mflower_et <- exactTest(con_d, pair=c("A","C"))
+con_fflower_v_petiole_et <- exactTest(con_d, pair=c("A","D"))
+con_fflower_v_root_et <- exactTest(con_d, pair=c("A","E"))
+con_fflower_v_vbud_et <- exactTest(con_d, pair=c("A","F"))
+con_leaf_v_mflower_et <- exactTest(con_d, pair=c("B","C"))
+con_leaf_v_petiole_et <- exactTest(con_d, pair=c("B","D"))
+con_leaf_v_root_et <- exactTest(con_d, pair=c("B","E"))
+con_leaf_v_vbud_et <- exactTest(con_d, pair=c("B","F"))
+con_mflower_v_petiole_et <- exactTest(con_d, pair=c("C","D"))
+con_mflower_v_root_et <- exactTest(con_d, pair=c("C","E"))
+con_mflower_v_vbud_et <- exactTest(con_d, pair=c("C","F"))
+con_petiole_v_root_et <- exactTest(con_d, pair=c("D","E"))
+con_petiole_v_vbud_et <- exactTest(con_d, pair=c("D","F"))
+con_root_v_vbud_et <- exactTest(con_d, pair=c("E","F"))
+
+con_fflower_v_leaf_toptags<-con_fflower_v_leaf_et %>% topTags(n=500) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(con_go, by="transcript_id") 
+con_fflower_v_mflower_toptags<-con_fflower_v_mflower_et %>% topTags(n=500) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(con_go, by="transcript_id") 
+con_fflower_v_petiole_toptags<-con_fflower_v_petiole_et %>% topTags(n=500) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(con_go, by="transcript_id") 
+con_fflower_v_root_toptags<-con_fflower_v_root_et %>% topTags(n=500) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(con_go, by="transcript_id") 
+con_fflower_v_vbud_toptags<-con_fflower_v_vbud_et %>% topTags(n=500) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(con_go, by="transcript_id") 
+con_leaf_v_mflower_toptags<-con_leaf_v_mflower_et %>% topTags(n=500) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(con_go, by="transcript_id") 
+con_leaf_v_petiole_toptags<-con_leaf_v_petiole_et %>% topTags(n=500) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(con_go, by="transcript_id") 
+con_leaf_v_root_toptags<-con_leaf_v_root_et %>% topTags(n=500) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(con_go, by="transcript_id") 
+con_leaf_v_vbud_toptags<-con_leaf_v_vbud_et %>% topTags(n=500) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(con_go, by="transcript_id") 
+con_mflower_v_petiole_toptags<-con_mflower_v_petiole_et %>% topTags(n=500) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(con_go, by="transcript_id") 
+con_mflower_v_root_toptags<-con_mflower_v_root_et %>% topTags(n=500) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(con_go, by="transcript_id") 
+con_mflower_v_vbud_toptags<-con_mflower_v_vbud_et %>% topTags(n=500) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(con_go, by="transcript_id") 
+con_petiole_v_root_toptags<-con_petiole_v_root_et %>% topTags(n=500) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(con_go, by="transcript_id") 
+con_petiole_v_vbud_toptags<-con_petiole_v_vbud_et %>% topTags(n=500) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(con_go, by="transcript_id") 
+con_root_v_vbud_toptags<-con_root_v_vbud_et %>% topTags(n=500) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(con_go, by="transcript_id") 
+
+
 
 
 ple_d<-DGEList(counts= ple_counts,group=factor(ple_groups))
@@ -75,9 +124,6 @@ design<-model.matrix(~ple_groups)
 
 
 
-
-
-
 #G = female flower = intercept
 #H = leaf = coef 2
 #I = male flower = coef 3
@@ -85,41 +131,37 @@ design<-model.matrix(~ple_groups)
 #K = root = coef 5
 #L = vegetative bud = coef 6
 
-fflower_v_leaf_et <- exactTest(ple_d, pair=c("G","H"))
-fflower_v_mflower_et <- exactTest(ple_d, pair=c("G","I"))
-fflower_v_petiole_et <- exactTest(ple_d, pair=c("G","J"))
-fflower_v_root_et <- exactTest(ple_d, pair=c("G","K"))
-fflower_v_vbud_et <- exactTest(ple_d, pair=c("G","L"))
+ple_fflower_v_leaf_et <- exactTest(ple_d, pair=c("G","H"))
+ple_fflower_v_mflower_et <- exactTest(ple_d, pair=c("G","I"))
+ple_fflower_v_petiole_et <- exactTest(ple_d, pair=c("G","J"))
+ple_fflower_v_root_et <- exactTest(ple_d, pair=c("G","K"))
+ple_fflower_v_vbud_et <- exactTest(ple_d, pair=c("G","L"))
+ple_leaf_v_mflower_et <- exactTest(ple_d, pair=c("H","I"))
+ple_leaf_v_petiole_et <- exactTest(ple_d, pair=c("H","J"))
+ple_leaf_v_root_et <- exactTest(ple_d, pair=c("H","K"))
+ple_leaf_v_vbud_et <- exactTest(ple_d, pair=c("H","L"))
+ple_mflower_v_petiole_et <- exactTest(ple_d, pair=c("I","J"))
+ple_mflower_v_root_et <- exactTest(ple_d, pair=c("I","K"))
+ple_mflower_v_vbud_et <- exactTest(ple_d, pair=c("I","L"))
+ple_petiole_v_root_et <- exactTest(ple_d, pair=c("J","K"))
+ple_petiole_v_vbud_et <- exactTest(ple_d, pair=c("J","L"))
+ple_root_v_vbud_et <- exactTest(ple_d, pair=c("K","L"))
 
-leaf_v_mflower_et <- exactTest(ple_d, pair=c("H","I"))
-leaf_v_petiole_et <- exactTest(ple_d, pair=c("H","J"))
-leaf_v_root_et <- exactTest(ple_d, pair=c("H","K"))
-leaf_v_vbud_et <- exactTest(ple_d, pair=c("H","L"))
-
-mflower_v_petiole_et <- exactTest(ple_d, pair=c("I","J"))
-mflower_v_root_et <- exactTest(ple_d, pair=c("I","K"))
-mflower_v_vbud_et <- exactTest(ple_d, pair=c("I","L"))
-
-petiole_v_root_et <- exactTest(ple_d, pair=c("J","K"))
-petiole_v_vbud_et <- exactTest(ple_d, pair=c("J","L"))
-
-root_v_vbud_et <- exactTest(ple_d, pair=c("K","L"))
-
-fflower_v_leaf_toptags<-topTags(fflower_v_leaf_et)
-fflower_v_mflower_toptags<-topTags(fflower_v_mflower_et)
-fflower_v_petiole_toptags<-topTags(fflower_v_petiole_et)
-fflower_v_root_toptags<-topTags(fflower_v_root_et)
-fflower_v_vbud_toptags<-topTags(fflower_v_vbud_et)
-leaf_v_mflower_toptags<-topTags(leaf_v_mflower_et)
-leaf_v_petiole_toptags<-topTags(leaf_v_petiole_et)
-leaf_v_root_toptags<-topTags(leaf_v_root_et)
-leaf_v_vbud_toptags<-topTags(leaf_v_vbud_et)
-mflower_v_petiole_toptags<-topTags(mflower_v_petiole_et)
-mflower_v_root_toptags<-topTags(mflower_v_root_et)
-mflower_v_vbud_toptags<-topTags(mflower_v_vbud_et)
-petiole_v_root_toptags<-topTags(petiole_v_root_et)
-petiole_v_vbud_toptags<-topTags(petiole_v_vbud_et)
-root_v_vbud_toptags<-topTags(root_v_vbud_et)
+ple_fflower_v_leaf_toptags<-ple_fflower_v_leaf_et %>% topTags(n=500) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(ple_go, by="transcript_id") 
+ple_fflower_v_mflower_toptags<-ple_fflower_v_mflower_et %>% topTags(n=500) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(ple_go, by="transcript_id") 
+ple_fflower_v_petiole_toptags<-ple_fflower_v_petiole_et %>% topTags(n=500) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(ple_go, by="transcript_id") 
+ple_fflower_v_root_toptags<-ple_fflower_v_root_et %>% topTags(n=500) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(ple_go, by="transcript_id") 
+ple_fflower_v_vbud_toptags<-ple_fflower_v_vbud_et %>% topTags(n=500) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(ple_go, by="transcript_id") 
+ple_leaf_v_mflower_toptags<-ple_leaf_v_mflower_et %>% topTags(n=500) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(ple_go, by="transcript_id") 
+ple_leaf_v_petiole_toptags<-ple_leaf_v_petiole_et %>% topTags(n=500) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(ple_go, by="transcript_id") 
+ple_leaf_v_root_toptags<-ple_leaf_v_root_et %>% topTags(n=500) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(ple_go, by="transcript_id") 
+ple_leaf_v_vbud_toptags<-ple_leaf_v_vbud_et %>% topTags(n=500) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(ple_go, by="transcript_id") 
+ple_mflower_v_petiole_toptags<-ple_mflower_v_petiole_et %>% topTags(n=500) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(ple_go, by="transcript_id") 
+ple_mflower_v_root_toptags<-ple_mflower_v_root_et %>% topTags(n=500) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(ple_go, by="transcript_id") 
+ple_mflower_v_vbud_toptags<-ple_mflower_v_vbud_et %>% topTags(n=500) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(ple_go, by="transcript_id") 
+ple_petiole_v_root_toptags<-ple_petiole_v_root_et %>% topTags(n=500) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(ple_go, by="transcript_id") 
+ple_petiole_v_vbud_toptags<-ple_petiole_v_vbud_et %>% topTags(n=500) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(ple_go, by="transcript_id") 
+ple_root_v_vbud_toptags<-ple_root_v_vbud_et %>% topTags(n=500) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(ple_go, by="transcript_id") 
 
 
 
@@ -127,82 +169,10 @@ root_v_vbud_toptags<-topTags(root_v_vbud_et)
 
 
 
-con_annot<-read_tsv("/Users/katie/Desktop/Bg/begonia_duplicate_expression/con_trinotate_annotation_report.xls")
-ple_annot<-read_tsv("/Users/katie/Desktop/Bg/begonia_duplicate_expression/ple_trinotate_annotation_report.xls")
-
-
-
-ple_annot$transcript_id
-
-
-fflower_v_leaf_toptags<-
-fflower_v_mflower_toptags<-
-fflower_v_petiole_toptags<-
-fflower_v_root_toptags<-
-fflower_v_vbud_toptags<-
-leaf_v_mflower_toptags<-
-leaf_v_petiole_toptags<-
-leaf_v_root_toptags<-
-leaf_v_vbud_toptags<-
-mflower_v_petiole_toptags<-
-mflower_v_root_toptags<-
-mflower_v_vbud_toptags<-
-petiole_v_root_toptags<-
-petiole_v_vbud_toptags<-
-root_v_vbud_toptags<-
-
-
-topTags(fflower_v_leaf_et)
 
 
 
 
-
-con 
-(77736/200849)*100
-
-(32848/42614)*100
-
-ple
-(86926/251473)*100
-
-(43119/59106)*100
-
-
-con_d$counts %>% data.frame() %>% 
-  select(CONfemaleFlower1, CONfemaleFlower2, CONfemaleFlower3) %>% 
-  rpkmByGroup(gene.length=con_d_lengths)
-
-CONfemaleFlower<-con_d$counts %>% data.frame() %>% select(CONfemaleFlower1, CONfemaleFlower2, CONfemaleFlower3) %>% rpkmByGroup(gene.length=con_d_lengths)  %>% data.frame()
-CONleaf<-con_d$counts %>% data.frame() %>% select(CONleaf1, CONleaf2, CONleaf3) %>% rpkmByGroup(gene.length=con_d_lengths) %>% data.frame()
-CONmaleFlower<-con_d$counts %>% data.frame() %>% select(CONmaleFlower1, CONmaleFlower2, CONmaleFlower3) %>% rpkmByGroup(gene.length=con_d_lengths) %>% data.frame()
-CONpetiole<-con_d$counts %>% data.frame() %>% select(CONpetiole1, CONpetiole2, CONpetiole3) %>% rpkmByGroup(gene.length=con_d_lengths) %>% data.frame()
-CONroot<-con_d$counts %>% data.frame() %>% select(CONroot1, CONroot3, CONvegBud1) %>% rpkmByGroup(gene.length=con_d_lengths) %>% data.frame()
-CONvegBud<-con_d$counts %>% data.frame() %>% select(CONvegBud1, CONvegBud2, CONvegBud3) %>% rpkmByGroup(gene.length=con_d_lengths) %>% data.frame()
-
-PLEfemaleFlower<-ple_d$counts %>% data.frame() %>% select(PLEfemaleFlower1, PLEfemaleFlower2, PLEfemaleFlower3) %>% rpkmByGroup(gene.length=ple_d_lengths)  %>% data.frame()
-PLEleaf<-ple_d$counts %>% data.frame() %>% select(PLEleaf1, PLEleaf2, PLEleaf3) %>% rpkmByGroup(gene.length=ple_d_lengths)  %>% data.frame()
-PLEmaleFlower<-ple_d$counts %>% data.frame() %>% select(PLEmaleFlower1, PLEmaleFlower2, PLEmaleFlower3) %>% rpkmByGroup(gene.length=ple_d_lengths)  %>% data.frame()
-PLEpetiole<-ple_d$counts %>% data.frame() %>% select(PLEpetiole1, PLEpetiole2) %>% rpkmByGroup(gene.length=ple_d_lengths)  %>% data.frame()
-PLEroot<-ple_d$counts %>% data.frame() %>% select(PLEroot1, PLEroot2, PLEroot3) %>% rpkmByGroup(gene.length=ple_d_lengths) %>% data.frame()
-PLEvegBud<-ple_d$counts %>% data.frame() %>% select(PLEvegBud1, PLEvegBud2, PLEvegBud3) %>% rpkmByGroup(gene.length=ple_d_lengths)  %>% data.frame()
-
-
-# bind con and ple together per species
-con_avg_cpm<-cbind(CONfemaleFlower, CONleaf, CONmaleFlower, CONpetiole, CONroot, CONvegBud)
-ple_avg_cpm<-cbind(PLEfemaleFlower, PLEleaf, PLEmaleFlower, PLEpetiole, PLEroot, PLEvegBud)
-
-# transfer row names
-rownames(con_avg_cpm)<-rownames(con_d$counts)
-rownames(ple_avg_cpm)<-rownames(ple_d$counts)
-
-# assign colnames
-colnames(con_avg_cpm)<-c("CONfemaleFlower", "CONleaf", "CONmaleFlower", "CONpetiole", "CONroot", "CONvegBud")
-colnames(ple_avg_cpm)<-c("PLEfemaleFlower", "PLEleaf", "PLEmaleFlower", "PLEpetiole", "PLEroot", "PLEvegBud")
-
-# write to table
-write.table(con_avg_cpm, file="con_avg_cpm", sep="\t", quote = FALSE, row.names = TRUE)
-write.table(ple_avg_cpm, file="ple_avg_cpm", sep="\t", quote = FALSE, row.names = TRUE)
 
 
 
