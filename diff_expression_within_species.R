@@ -372,12 +372,13 @@ ple_enriched_count<-sapply(ple_enriched_list, function(x) x %>% filter(over_repr
 
 
 
-con_chord_df<-data.frame(from=from, to=to, de_count=con_enriched_count^2)
-ple_chord_df<-data.frame(from=from, to=to, de_count=ple_enriched_count^2)
+con_chord_df<-data.frame(from=from, to=to, de_count=con_enriched_count)
+ple_chord_df<-data.frame(from=from, to=to, de_count=ple_enriched_count)
+
 
 chordDiagram(con_chord_df, grid.col = circos_cols)
 chordDiagram(ple_chord_df, grid.col = circos_cols)
-
+circos.clear()
 
 
 ###############################################
@@ -585,11 +586,149 @@ ggplot(de_df, aes(x=comparison, y=count, colour=species, fill=species)) +
 
 
 
+#################################################################
+#   enriched GO that are unique to a species, per comparison   #
+#################################################################
+
+
+# For each tissue, get GO terms that are unique to each species (up AND down), get the GO term mappings, plot the top
+
+
+con_up_enriched_list_go<-list(con_female_flower_v_leaf_leaf_up_enriched %>% dplyr::select(category) %>% pull(),
+                           con_female_flower_v_male_flower_male_flower_up_enriched %>% dplyr::select(category) %>% pull(),
+                           con_female_flower_v_petiole_petiole_up_enriched %>% dplyr::select(category) %>% pull(),
+                           con_female_flower_v_root_root_up_enriched %>% dplyr::select(category) %>% pull(),
+                           con_female_flower_v_vegetative_bud_vegetative_bud_up_enriched %>% dplyr::select(category) %>% pull(),
+                           con_leaf_v_male_flower_male_flower_up_enriched %>% dplyr::select(category) %>% pull(),
+                           con_leaf_v_petiole_petiole_up_enriched %>% dplyr::select(category) %>% pull(),
+                           con_leaf_v_root_root_up_enriched %>% dplyr::select(category) %>% pull(),
+                           con_leaf_v_vegetative_bud_vegetative_bud_up_enriched %>% dplyr::select(category) %>% pull(),
+                           con_male_flower_v_petiole_petiole_up_enriched %>% dplyr::select(category) %>% pull(),
+                           con_male_flower_v_root_root_up_enriched %>% dplyr::select(category) %>% pull(),
+                           con_male_flower_v_vegetative_bud_vegetative_bud_up_enriched %>% dplyr::select(category) %>% pull(),
+                           con_petiole_v_root_root_up_enriched %>% dplyr::select(category) %>% pull(),
+                           con_petiole_v_vegetative_bud_vegetative_bud_up_enriched %>% dplyr::select(category) %>% pull(),
+                           con_root_v_vegetative_bud_vegetative_bud_up_enriched %>% dplyr::select(category) %>% pull())
+
+con_down_enriched_list_go<-list(con_female_flower_v_leaf_leaf_down_enriched %>% dplyr::select(category) %>% pull(),
+                             con_female_flower_v_male_flower_male_flower_down_enriched %>% dplyr::select(category) %>% pull(),
+                             con_female_flower_v_petiole_petiole_down_enriched %>% dplyr::select(category) %>% pull(),
+                             con_female_flower_v_root_root_down_enriched %>% dplyr::select(category) %>% pull(),
+                             con_female_flower_v_vegetative_bud_vegetative_bud_down_enriched %>% dplyr::select(category) %>% pull(),
+                             con_leaf_v_male_flower_male_flower_down_enriched %>% dplyr::select(category) %>% pull(),
+                             con_leaf_v_petiole_petiole_down_enriched %>% dplyr::select(category) %>% pull(),
+                             con_leaf_v_root_root_down_enriched %>% dplyr::select(category) %>% pull(),
+                             con_leaf_v_vegetative_bud_vegetative_bud_down_enriched %>% dplyr::select(category) %>% pull(),
+                             con_male_flower_v_petiole_petiole_down_enriched %>% dplyr::select(category) %>% pull(),
+                             con_male_flower_v_root_root_down_enriched %>% dplyr::select(category) %>% pull(),
+                             con_male_flower_v_vegetative_bud_vegetative_bud_down_enriched %>% dplyr::select(category) %>% pull(),
+                             con_petiole_v_root_root_down_enriched %>% dplyr::select(category) %>% pull(),
+                             con_petiole_v_vegetative_bud_vegetative_bud_down_enriched %>% dplyr::select(category) %>% pull(),
+                             con_root_v_vegetative_bud_vegetative_bud_down_enriched %>% dplyr::select(category) %>% pull())
 
 
 
 
+ple_up_enriched_list_go<-list(ple_female_flower_v_leaf_leaf_up_enriched %>% dplyr::select(category) %>% pull(),
+                           ple_female_flower_v_male_flower_male_flower_up_enriched %>% dplyr::select(category) %>% pull(),
+                           ple_female_flower_v_petiole_petiole_up_enriched %>% dplyr::select(category) %>% pull(),
+                           ple_female_flower_v_root_root_up_enriched %>% dplyr::select(category) %>% pull(),
+                           ple_female_flower_v_vegetative_bud_vegetative_bud_up_enriched %>% dplyr::select(category) %>% pull(),
+                           ple_leaf_v_male_flower_male_flower_up_enriched %>% dplyr::select(category) %>% pull(),
+                           ple_leaf_v_petiole_petiole_up_enriched %>% dplyr::select(category) %>% pull(),
+                           ple_leaf_v_root_root_up_enriched %>% dplyr::select(category) %>% pull(),
+                           ple_leaf_v_vegetative_bud_vegetative_bud_up_enriched %>% dplyr::select(category) %>% pull(),
+                           ple_male_flower_v_petiole_petiole_up_enriched %>% dplyr::select(category) %>% pull(),
+                           ple_male_flower_v_root_root_up_enriched %>% dplyr::select(category) %>% pull(),
+                           ple_male_flower_v_vegetative_bud_vegetative_bud_up_enriched %>% dplyr::select(category) %>% pull(),
+                           ple_petiole_v_root_root_up_enriched %>% dplyr::select(category) %>% pull(),
+                           ple_petiole_v_vegetative_bud_vegetative_bud_up_enriched %>% dplyr::select(category) %>% pull(),
+                           ple_root_v_vegetative_bud_vegetative_bud_up_enriched %>% dplyr::select(category) %>% pull())
+
+ple_down_enriched_list_go<-list(ple_female_flower_v_leaf_leaf_down_enriched %>% dplyr::select(category) %>% pull(),
+                             ple_female_flower_v_male_flower_male_flower_down_enriched %>% dplyr::select(category) %>% pull(),
+                             ple_female_flower_v_petiole_petiole_down_enriched %>% dplyr::select(category) %>% pull(),
+                             ple_female_flower_v_root_root_down_enriched %>% dplyr::select(category) %>% pull(),
+                             ple_female_flower_v_vegetative_bud_vegetative_bud_down_enriched %>% dplyr::select(category) %>% pull(),
+                             ple_leaf_v_male_flower_male_flower_down_enriched %>% dplyr::select(category) %>% pull(),
+                             ple_leaf_v_petiole_petiole_down_enriched %>% dplyr::select(category) %>% pull(),
+                             ple_leaf_v_root_root_down_enriched %>% dplyr::select(category) %>% pull(),
+                             ple_leaf_v_vegetative_bud_vegetative_bud_down_enriched %>% dplyr::select(category) %>% pull(),
+                             ple_male_flower_v_petiole_petiole_down_enriched %>% dplyr::select(category) %>% pull(),
+                             ple_male_flower_v_root_root_down_enriched %>% dplyr::select(category) %>% pull(),
+                             ple_male_flower_v_vegetative_bud_vegetative_bud_down_enriched %>% dplyr::select(category) %>% pull(),
+                             ple_petiole_v_root_root_down_enriched %>% dplyr::select(category) %>% pull(),
+                             ple_petiole_v_vegetative_bud_vegetative_bud_down_enriched %>% dplyr::select(category) %>% pull(),
+                             ple_root_v_vegetative_bud_vegetative_bud_down_enriched %>% dplyr::select(category) %>% pull())
 
 
 
+# for each tissue comparison, get the unique GO enriched terms between con and ple
+# also shared ones
+in_con_notin_ple_down<-mapply(function(one, two) unique(setdiff(one, two)), con_down_enriched_list_go, ple_down_enriched_list_go)
+in_ple_notin_con_down<-mapply(function(one, two) unique(setdiff(two, one)), con_down_enriched_list_go, ple_down_enriched_list_go)
 
+in_con_notin_ple_up<-mapply(function(one, two) unique(setdiff(one, two)), con_up_enriched_list_go, ple_up_enriched_list_go)
+in_ple_notin_con_up<-mapply(function(one, two) unique(setdiff(two, one)), con_up_enriched_list_go, ple_up_enriched_list_go)
+
+in_ple_and_con_down<-mapply(function(one, two) intersect(one, two), con_down_enriched_list_go, ple_down_enriched_list_go)
+in_ple_and_con_up<-mapply(function(one, two) intersect(one, two), con_up_enriched_list_go, ple_up_enriched_list_go)
+
+
+comparison_names<-list("Female flower vs Leaf",
+                    "Female flower vs Male flower",
+                    "Female flower vs Petiole",
+                    "Female flower vs Root",
+                    "Female flower vs Vegetative bud",
+                    "Leaf vs Male flower",
+                    "Leaf vs Petiole",
+                    "Leaf vs Root",
+                    "Leaf vs Vegetative bud",
+                    "Male flower vs Petiole",
+                    "Male flower vs Root",
+                    "Male flower vs Vegetative bud",
+                    "Petiole vs Root",
+                    "Petiole vs Vegetative bud",
+                    "Root vs Vegetative bud")
+
+
+# conch specific Go terms enriched in con but not in ple per tissue comparison (upregulaed reference tissue)
+con_up<-mapply(function(one, two) two %>% dplyr::filter(category %in% one & over_represented_FDR < 0.005) %>% dplyr::select(category, numDEInCat, ontology, go_term), in_con_notin_ple_up, con_up_enriched_list, SIMPLIFY=FALSE)
+con_up_labelled<-mapply(function(names, tibbles) tibbles %>% mutate(comparison=names, species="B. conchifolia", direction="up"), comparison_names, con_up, SIMPLIFY = FALSE)
+
+# conch specific Go terms enriched in con but not in ple per tissue coparison (downregulated reference tissue)
+con_down<-mapply(function(one, two) two %>% dplyr::filter(category %in% one & over_represented_FDR < 0.005) %>% dplyr::select(category, numDEInCat, ontology, go_term), in_con_notin_ple_down, con_down_enriched_list, SIMPLIFY=FALSE)
+con_down_labelled<-mapply(function(names, tibbles) tibbles %>% mutate(comparison=names, species="B. conchifolia", direction="down"), comparison_names, con_down, SIMPLIFY = FALSE)
+
+# as above but for ple
+ple_up<-mapply(function(one, two) two %>% dplyr::filter(category %in% one & over_represented_FDR < 0.005) %>% dplyr::select(category, numDEInCat, ontology, go_term), in_ple_notin_con_up, ple_up_enriched_list, SIMPLIFY=FALSE)
+ple_up_labelled<-mapply(function(names, tibbles) tibbles %>% mutate(comparison=names, species="B. plebeja", direction="up"), comparison_names, ple_up, SIMPLIFY = FALSE)
+
+ple_down<-mapply(function(one, two) two %>% dplyr::filter(category %in% one & over_represented_FDR < 0.005) %>% dplyr::select(category, numDEInCat, ontology, go_term), in_ple_notin_con_down, ple_down_enriched_list, SIMPLIFY=FALSE)
+ple_down_labelled<-mapply(function(names, tibbles) tibbles %>% mutate(comparison=names, species="B. plebeja", direction="down"), comparison_names, ple_down, SIMPLIFY = FALSE)
+
+# bind all the data frames together
+# edit the go_term column to remove the ontology in front of go term definitions
+all_up<-bind_rows(con_up_labelled, con_down_labelled, ple_up_labelled, ple_down_labelled) %>% filter(direction == "up") %>% dplyr::select(-direction) %>% data.frame()
+all_down<-bind_rows(con_up_labelled, con_down_labelled, ple_up_labelled, ple_down_labelled) %>% filter(direction == "down") %>% dplyr::select(-direction) %>% data.frame()
+all_up$go_term<-substring(all_up$go_term, 4)
+all_down$go_term<-substring(all_down$go_term, 4)
+
+# order the go terms by number DE genes in category for plotting
+all_up$go_term<-factor(all_up$go_term, levels = unique(all_up$go_term[order(all_up$numDEInCat)]))
+all_down$go_term<-factor(all_down$go_term, levels = unique(all_down$go_term[order(all_down$numDEInCat)]))
+
+
+ggplot(all_up, aes(x=go_term, y=numDEInCat, colour=comparison, fill=comparison)) + 
+  geom_bar(stat="identity", position = "dodge") + coord_flip() + facet_grid(cols = vars(species))
+
+ggplot(all_down, aes(x=go_term, y=numDEInCat, colour=comparison, fill=comparison)) + 
+  geom_bar(stat="identity", position = "dodge") + coord_flip() + facet_grid(cols = vars(species))
+
++ facet_grid(rows = vars(direction)) + coord_flip() 
+
+test<-all$go_term[1]
+
+test[1]
+
+substring(all$go_term, 4)
