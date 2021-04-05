@@ -3,6 +3,14 @@ library(dplyr)
 library(magrittr)
 library(stringr)
 library(readr)
+library(tibble)
+library(VennDiagram)
+library(circlize)
+library(ggplot2)
+
+####################################
+#        DE genes analysis         #
+####################################
 
 #read in featurecounts output
 con_counts<-read.table("/Users/katie/Desktop/Bg/begonia_duplicate_expression/featurecount/con/con_counts", header=TRUE)
@@ -66,7 +74,7 @@ plotMDS(con_d, method="bcv", col=as.numeric(con_d$samples$group))
 con_d<-estimateCommonDisp(con_d)
 con_d<-estimateTagwiseDisp(con_d, prior.n = 4)
 
-
+# CON tissues
 #A = female flower
 #B = leaf
 #C = male flower
@@ -74,40 +82,13 @@ con_d<-estimateTagwiseDisp(con_d, prior.n = 4)
 #E = root
 #F = vegetative bud
 
-con_fflower_v_leaf_et <- exactTest(con_d, pair=c("A","B"))
-con_fflower_v_mflower_et <- exactTest(con_d, pair=c("A","C"))
-con_fflower_v_petiole_et <- exactTest(con_d, pair=c("A","D"))
-con_fflower_v_root_et <- exactTest(con_d, pair=c("A","E"))
-con_fflower_v_vbud_et <- exactTest(con_d, pair=c("A","F"))
-con_leaf_v_mflower_et <- exactTest(con_d, pair=c("B","C"))
-con_leaf_v_petiole_et <- exactTest(con_d, pair=c("B","D"))
-con_leaf_v_root_et <- exactTest(con_d, pair=c("B","E"))
-con_leaf_v_vbud_et <- exactTest(con_d, pair=c("B","F"))
-con_mflower_v_petiole_et <- exactTest(con_d, pair=c("C","D"))
-con_mflower_v_root_et <- exactTest(con_d, pair=c("C","E"))
-con_mflower_v_vbud_et <- exactTest(con_d, pair=c("C","F"))
-con_petiole_v_root_et <- exactTest(con_d, pair=c("D","E"))
-con_petiole_v_vbud_et <- exactTest(con_d, pair=c("D","F"))
-con_root_v_vbud_et <- exactTest(con_d, pair=c("E","F"))
-
-con_fflower_v_leaf_toptags<-con_fflower_v_leaf_et %>% topTags(n=1000) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(con_go, by="transcript_id") 
-con_fflower_v_mflower_toptags<-con_fflower_v_mflower_et %>% topTags(n=1000) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(con_go, by="transcript_id") 
-con_fflower_v_petiole_toptags<-con_fflower_v_petiole_et %>% topTags(n=1000) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(con_go, by="transcript_id") 
-con_fflower_v_root_toptags<-con_fflower_v_root_et %>% topTags(n=1000) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(con_go, by="transcript_id") 
-con_fflower_v_vbud_toptags<-con_fflower_v_vbud_et %>% topTags(n=1000) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(con_go, by="transcript_id") 
-con_leaf_v_mflower_toptags<-con_leaf_v_mflower_et %>% topTags(n=1000) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(con_go, by="transcript_id") 
-con_leaf_v_petiole_toptags<-con_leaf_v_petiole_et %>% topTags(n=1000) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(con_go, by="transcript_id") 
-con_leaf_v_root_toptags<-con_leaf_v_root_et %>% topTags(n=1000) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(con_go, by="transcript_id") 
-con_leaf_v_vbud_toptags<-con_leaf_v_vbud_et %>% topTags(n=1000) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(con_go, by="transcript_id") 
-con_mflower_v_petiole_toptags<-con_mflower_v_petiole_et %>% topTags(n=1000) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(con_go, by="transcript_id") 
-con_mflower_v_root_toptags<-con_mflower_v_root_et %>% topTags(n=1000) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(con_go, by="transcript_id") 
-con_mflower_v_vbud_toptags<-con_mflower_v_vbud_et %>% topTags(n=1000) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(con_go, by="transcript_id") 
-con_petiole_v_root_toptags<-con_petiole_v_root_et %>% topTags(n=1000) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(con_go, by="transcript_id") 
-con_petiole_v_vbud_toptags<-con_petiole_v_vbud_et %>% topTags(n=1000) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(con_go, by="transcript_id") 
-con_root_v_vbud_toptags<-con_root_v_vbud_et %>% topTags(n=1000) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(con_go, by="transcript_id") 
-
-
-
+# PLE tissues
+#G = female flower 
+#H = leaf = coef
+#I = male flower 
+#J = petiole 
+#K = root
+#L = vegetative bud 
 
 ple_d<-DGEList(counts= ple_counts,group=factor(ple_groups))
 ple_d.full<-ple_d
@@ -123,344 +104,492 @@ ple_d<-estimateTagwiseDisp(ple_d, prior.n = 4)
 design<-model.matrix(~ple_groups)
 
 
+tissue_reference<-list("A" = "female_flower",
+                       "B" = "leaf",
+                       "C" = "male_flower",
+                       "D" = "petiole",
+                       "E" = "root",
+                       "F" = "vegetative_bud",
+                       "G" = "female_flower",
+                       "H" = "leaf",
+                       "I" = "male_flower",
+                       "J" = "petiole",
+                       "K" = "root",
+                       "L" = "vegetative_bud")
+de_con<-c()
+de_ple<-c()
+write_de_genes<-function(species, dge_object, pair1, pair2, annotation){
+  tissue1 = tissue_reference[[pair1]]
+  tissue2 = tissue_reference[[pair2]]
+  exact_test<-exactTest(dge_object, pair=c(pair1, pair2))
+  top_tags<-exact_test %>% topTags(n=10000) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(annotation, by="transcript_id")
+  comparison_all<-top_tags %>% filter(FDR < 0.05 & abs(logFC) > 2)
+  comparison_upregulated<- top_tags %>% filter(FDR < 0.05 & logFC > 2) %>% dplyr::select(transcript_id)
+  comparison_downregulated<-top_tags %>% filter(FDR < 0.05 & logFC < -2) %>% dplyr::select(transcript_id)
+  up_outfile<-paste(species, tissue1, "v", tissue2, tissue2, "up", sep="_")
+  down_outfile<-paste(species, tissue1, "v", tissue2, tissue2, "down", sep="_")
+  all_oufile<-paste(species, tissue1, "v", tissue2, tissue2, "all", sep="_")
+  write.table(comparison_upregulated, file=up_outfile, quote=FALSE, row.names = FALSE, col.names = FALSE)
+  write.table(comparison_downregulated, file=down_outfile, quote=FALSE, row.names = FALSE, col.names = FALSE)
+  write.table(comparison_all, file=all_oufile, quote=FALSE, row.names = FALSE, col.names = FALSE)
+  if (species == "con"){
+    de_con<<-c(de_con, comparison_all$transcript_id)
+  }
+  if (species == "ple"){
+    de_ple<<-c(de_ple, comparison_all$transcript_id)
+  }
+    
+}
+  
+  
+write_de_genes("con", con_d, "A", "B", con_go)
+write_de_genes("con", con_d, "A", "C", con_go)
+write_de_genes("con", con_d, "A", "D", con_go)
+write_de_genes("con", con_d, "A", "E", con_go)
+write_de_genes("con", con_d, "A", "F", con_go)
+write_de_genes("con", con_d, "B", "C", con_go)
+write_de_genes("con", con_d, "B", "D", con_go)
+write_de_genes("con", con_d, "B", "E", con_go)
+write_de_genes("con", con_d, "B", "F", con_go)
+write_de_genes("con", con_d, "C", "D", con_go)
+write_de_genes("con", con_d, "C", "E", con_go)
+write_de_genes("con", con_d, "C", "F", con_go)
+write_de_genes("con", con_d, "D", "E", con_go)
+write_de_genes("con", con_d, "D", "F", con_go)
+write_de_genes("con", con_d, "E", "F", con_go)
+  
+  
+  write_de_genes("ple", ple_d, "G", "H", ple_go)
+  write_de_genes("ple", ple_d, "G", "I", ple_go)
+  write_de_genes("ple", ple_d, "G", "J", ple_go)
+  write_de_genes("ple", ple_d, "G", "K", ple_go)
+  write_de_genes("ple", ple_d, "G", "L", ple_go)
+  write_de_genes("ple", ple_d, "H", "I", ple_go)
+  write_de_genes("ple", ple_d, "H", "J", ple_go)
+  write_de_genes("ple", ple_d, "H", "K", ple_go)
+  write_de_genes("ple", ple_d, "H", "L", ple_go)
+  write_de_genes("ple", ple_d, "I", "J", ple_go)
+  write_de_genes("ple", ple_d, "I", "K", ple_go)
+  write_de_genes("ple", ple_d, "I", "L", ple_go)
+  write_de_genes("ple", ple_d, "J", "K", ple_go)
+  write_de_genes("ple", ple_d, "J", "L", ple_go)
+  write_de_genes("ple", ple_d, "K", "L", ple_go)
+  
+
+
+
+
+
+
+########################################################
+#    Venn of GO terms shared and unique of DE genes    #
+########################################################
+
+con_transcript2go<-strsplit(con_go$GO_terms, ",")
+names(con_transcript2go)<-con_go$transcript_id
+
+ple_transcript2go<-strsplit(ple_go$GO_terms, ",")
+names(ple_transcript2go)<-ple_go$transcript_id
+  
+con_de_go<-sapply(de_con, function(x) con_transcript2go[[x]])
+ple_de_go<-sapply(de_ple, function(x) ple_transcript2go[[x]])
+
+a<-unlist(con_de_go) %>% as.character()
+b<-unlist(ple_de_go) %>% as.character()
+
+intersect(a,b)
+# elements in con but not in ple
+setdiff(a, b)
+# elements in ple but not in con
+setdiff(b, a)
+
+
+
+myCol<-c("mistyrose1", "lightskyblue1")
+v<-venn.diagram(list(cat_a=a, cat_b=b), 
+                filename = "test_venn.png", 
+                category.names = c("B. conchifolia" , "B. plebeja"),
+                lwd = 1,
+                lty = 'blank',
+                fill = myCol,
+                cex = .6,
+                fontface = "bold",
+                fontfamily = "sans",
+                
+                imagetype="png" ,
+                height = 600 , 
+                width = 600 , 
+                resolution = 300,
+                compression = "lzw",
+                
+                cat.cex = 0.5,
+                cat.fontface = "bold",
+                cat.default.pos = "outer",
+                cat.pos = c(-30, 32),
+                cat.dist = c(0.05, 0.05),
+                cat.fontfamily = "sans",
+                )
+
+
+####################################
+#    DE gene circos plots    #
+####################################
+
+#A = female flower
+#B = leaf
+#C = male flower
+#D = petiole
+#E = root
+#F = vegetative bud
+
+
+from = c("Female flower",
+"Female flower",
+"Female flower",
+"Female flower",
+"Female flower",
+"Leaf",
+"Leaf",
+"Leaf",
+"Leaf",
+"Male flower",
+"Male flower",
+"Male flower",
+"Petiole",
+"Petiole",
+"Root")
+
+to<-c("Leaf",
+"Male flower",
+"Petiole",
+"Root",
+"Vegetative bud",
+"Male flower",
+"Petiole",
+"Root",
+"Vegetative bud",
+"Petiole",
+"Root",
+"Vegetative bud",
+"Root",
+"Vegetative bud",
+"Vegetative bud")
+
+
+con_de_count<-c(1241, 1444, 1015, 1778, 1226, 2366, 1030, 2018, 1182, 1861, 2766, 2425, 1826, 1221, 1410)
+ple_de_count<-c(1455, 1248, 1205, 2188, 1312, 2592, 1191, 2634, 1579, 1976, 2659, 2235, 1953, 948, 1667)
+
+con_chord_df<-data.frame(from=from, to=to, de_count=con_de_count)
+ple_chord_df<-data.frame(from=from, to=to, de_count=ple_de_count)
+
+pdf('con_circos_plot.pdf')
+chordDiagram(con_chord_df, grid.col = circos_cols)
+dev.off()
+circos.clear()
+pdf('ple_circos_plot.pdf')
+chordDiagram(ple_chord_df, grid.col = circos_cols)
+dev.off()
+
+circos_cols<-c("hotpink",
+"green4",
+"orange",
+"darkseagreen2",
+"tan4",
+"skyblue1")
+
+
+####################################
+#    GO enrichment circos plots    #
+####################################
+
+con_female_flower_v_leaf_go_enriched <- read_tsv("go_sidb/con/enrichment_input_con/con_female_flower_v_leaf_leaf_all.GOseq.enriched")
+con_female_flower_v_male_flower_go_enriched <- read_tsv("go_sidb/con/enrichment_input_con/con_female_flower_v_male_flower_male_flower_all.GOseq.enriched")
+con_female_flower_v_petiole_go_enriched <- read_tsv("go_sidb/con/enrichment_input_con/con_female_flower_v_petiole_petiole_all.GOseq.enriched")
+con_female_flower_v_root_go_enriched <- read_tsv("go_sidb/con/enrichment_input_con/con_female_flower_v_root_root_all.GOseq.enriched")
+con_female_flower_v_vegetative_bud_go_enriched <- read_tsv("go_sidb/con/enrichment_input_con/con_female_flower_v_vegetative_bud_vegetative_bud_all.GOseq.enriched")
+con_leaf_v_male_flower_go_enriched <- read_tsv("go_sidb/con/enrichment_input_con/con_leaf_v_male_flower_male_flower_all.GOseq.enriched")
+con_leaf_v_petiole_go_enriched <- read_tsv("go_sidb/con/enrichment_input_con/con_leaf_v_petiole_petiole_all.GOseq.enriched")
+con_leaf_v_root_go_enriched <- read_tsv("go_sidb/con/enrichment_input_con/con_leaf_v_root_root_all.GOseq.enriched")
+con_leaf_v_vegetative_bud_go_enriched <- read_tsv("go_sidb/con/enrichment_input_con/con_leaf_v_vegetative_bud_vegetative_bud_all.GOseq.enriched")
+con_male_flower_v_petiole_go_enriched <- read_tsv("go_sidb/con/enrichment_input_con/con_male_flower_v_petiole_petiole_all.GOseq.enriched")
+con_male_flower_v_root_go_enriched <- read_tsv("go_sidb/con/enrichment_input_con/con_male_flower_v_root_root_all.GOseq.enriched")
+con_male_flower_v_vegetative_bud_go_enriched <- read_tsv("go_sidb/con/enrichment_input_con/con_male_flower_v_vegetative_bud_vegetative_bud_all.GOseq.enriched")
+con_petiole_v_root_go_enriched <- read_tsv("go_sidb/con/enrichment_input_con/con_petiole_v_root_root_all.GOseq.enriched")
+con_petiole_v_vegetative_bud_go_enriched <- read_tsv("go_sidb/con/enrichment_input_con/con_petiole_v_vegetative_bud_vegetative_bud_all.GOseq.enriched")
+con_root_v_vegetative_bud_go_enriched <- read_tsv("go_sidb/con/enrichment_input_con/con_root_v_vegetative_bud_vegetative_bud_all.GOseq.enriched")
+
+ple_female_flower_v_leaf_go_enriched <- read_tsv("go_sidb/ple/enrichment_input_ple/ple_female_flower_v_leaf_leaf_all.GOseq.enriched")
+ple_female_flower_v_male_flower_go_enriched <- read_tsv("go_sidb/ple/enrichment_input_ple/ple_female_flower_v_male_flower_male_flower_all.GOseq.enriched")
+ple_female_flower_v_petiole_go_enriched <- read_tsv("go_sidb/ple/enrichment_input_ple/ple_female_flower_v_petiole_petiole_all.GOseq.enriched")
+ple_female_flower_v_root_go_enriched <- read_tsv("go_sidb/ple/enrichment_input_ple/ple_female_flower_v_root_root_all.GOseq.enriched")
+ple_female_flower_v_vegetative_bud_go_enriched <- read_tsv("go_sidb/ple/enrichment_input_ple/ple_female_flower_v_vegetative_bud_vegetative_bud_all.GOseq.enriched")
+ple_leaf_v_male_flower_go_enriched <- read_tsv("go_sidb/ple/enrichment_input_ple/ple_leaf_v_male_flower_male_flower_all.GOseq.enriched")
+ple_leaf_v_petiole_go_enriched <- read_tsv("go_sidb/ple/enrichment_input_ple/ple_leaf_v_petiole_petiole_all.GOseq.enriched")
+ple_leaf_v_root_go_enriched <- read_tsv("go_sidb/ple/enrichment_input_ple/ple_leaf_v_root_root_all.GOseq.enriched")
+ple_leaf_v_vegetative_bud_go_enriched <- read_tsv("go_sidb/ple/enrichment_input_ple/ple_leaf_v_vegetative_bud_vegetative_bud_all.GOseq.enriched")
+ple_male_flower_v_petiole_go_enriched <- read_tsv("go_sidb/ple/enrichment_input_ple/ple_male_flower_v_petiole_petiole_all.GOseq.enriched")
+ple_male_flower_v_root_go_enriched <- read_tsv("go_sidb/ple/enrichment_input_ple/ple_male_flower_v_root_root_all.GOseq.enriched")
+ple_male_flower_v_vegetative_bud_go_enriched <- read_tsv("go_sidb/ple/enrichment_input_ple/ple_male_flower_v_vegetative_bud_vegetative_bud_all.GOseq.enriched")
+ple_petiole_v_root_go_enriched <- read_tsv("go_sidb/ple/enrichment_input_ple/ple_petiole_v_root_root_all.GOseq.enriched")
+ple_petiole_v_vegetative_bud_go_enriched <- read_tsv("go_sidb/ple/enrichment_input_ple/ple_petiole_v_vegetative_bud_vegetative_bud_all.GOseq.enriched")
+ple_root_v_vegetative_bud_go_enriched <- read_tsv("go_sidb/ple/enrichment_input_ple/ple_root_v_vegetative_bud_vegetative_bud_all.GOseq.enriched")
+
+con_enriched_list<-list(ple_female_flower_v_leaf_go_enriched,
+ple_female_flower_v_male_flower_go_enriched,
+ple_female_flower_v_petiole_go_enriched,
+ple_female_flower_v_root_go_enriched,
+ple_female_flower_v_vegetative_bud_go_enriched,
+ple_leaf_v_male_flower_go_enriched,
+ple_leaf_v_petiole_go_enriched,
+ple_leaf_v_root_go_enriched,
+ple_leaf_v_vegetative_bud_go_enriched,
+ple_male_flower_v_petiole_go_enriched,
+ple_male_flower_v_root_go_enriched,
+ple_male_flower_v_vegetative_bud_go_enriched,
+ple_petiole_v_root_go_enriched,
+ple_petiole_v_vegetative_bud_go_enriched,
+ple_root_v_vegetative_bud_go_enriched)
+
+ple_enriched_list<-list(con_female_flower_v_leaf_go_enriched,
+con_female_flower_v_male_flower_go_enriched,
+con_female_flower_v_petiole_go_enriched,
+con_female_flower_v_root_go_enriched,
+con_female_flower_v_vegetative_bud_go_enriched,
+con_leaf_v_male_flower_go_enriched,
+con_leaf_v_petiole_go_enriched,
+con_leaf_v_root_go_enriched,
+con_leaf_v_vegetative_bud_go_enriched,
+con_male_flower_v_petiole_go_enriched,
+con_male_flower_v_root_go_enriched,
+con_male_flower_v_vegetative_bud_go_enriched,
+con_petiole_v_root_go_enriched,
+con_petiole_v_vegetative_bud_go_enriched,
+con_root_v_vegetative_bud_go_enriched)
+
+
+con_enriched_count<-sapply(con_enriched_list, function(x) x %>% filter(over_represented_FDR < 0.05) %>% dplyr::select(term) %>% data.frame() %>% nrow())
+ple_enriched_count<-sapply(ple_enriched_list, function(x) x %>% filter(over_represented_FDR < 0.05) %>% dplyr::select(term) %>% data.frame() %>% nrow())
+
+
+
+con_chord_df<-data.frame(from=from, to=to, de_count=con_enriched_count^2)
+ple_chord_df<-data.frame(from=from, to=to, de_count=ple_enriched_count^2)
+
+chordDiagram(con_chord_df, grid.col = circos_cols)
+chordDiagram(ple_chord_df, grid.col = circos_cols)
+
+
+
+###############################################
+#   GO enrichment up and down DE barplots     #
+###############################################
+
+
+
+con_female_flower_v_leaf_leaf_up_enriched <- read_tsv("go_sidb/con/enrichment_input_con/con_female_flower_v_leaf_leaf_up.GOseq.enriched")
+con_female_flower_v_male_flower_male_flower_up_enriched <- read_tsv("go_sidb/con/enrichment_input_con/con_female_flower_v_male_flower_male_flower_up.GOseq.enriched")
+con_female_flower_v_petiole_petiole_up_enriched <- read_tsv("go_sidb/con/enrichment_input_con/con_female_flower_v_petiole_petiole_up.GOseq.enriched")
+con_female_flower_v_root_root_up_enriched <- read_tsv("go_sidb/con/enrichment_input_con/con_female_flower_v_root_root_up.GOseq.enriched")
+con_female_flower_v_vegetative_bud_vegetative_bud_up_enriched <- read_tsv("go_sidb/con/enrichment_input_con/con_female_flower_v_vegetative_bud_vegetative_bud_up.GOseq.enriched")
+con_leaf_v_male_flower_male_flower_up_enriched <- read_tsv("go_sidb/con/enrichment_input_con/con_leaf_v_male_flower_male_flower_up.GOseq.enriched")
+con_leaf_v_petiole_petiole_up_enriched <- read_tsv("go_sidb/con/enrichment_input_con/con_leaf_v_petiole_petiole_up.GOseq.enriched")
+con_leaf_v_root_root_up_enriched <- read_tsv("go_sidb/con/enrichment_input_con/con_leaf_v_root_root_up.GOseq.enriched")
+con_leaf_v_vegetative_bud_vegetative_bud_up_enriched <- read_tsv("go_sidb/con/enrichment_input_con/con_leaf_v_vegetative_bud_vegetative_bud_up.GOseq.enriched")
+con_male_flower_v_petiole_petiole_up_enriched <- read_tsv("go_sidb/con/enrichment_input_con/con_male_flower_v_petiole_petiole_up.GOseq.enriched")
+con_male_flower_v_root_root_up_enriched <- read_tsv("go_sidb/con/enrichment_input_con/con_male_flower_v_root_root_up.GOseq.enriched")
+con_male_flower_v_vegetative_bud_vegetative_bud_up_enriched <- read_tsv("go_sidb/con/enrichment_input_con/con_male_flower_v_vegetative_bud_vegetative_bud_up.GOseq.enriched")
+con_petiole_v_root_root_up_enriched <- read_tsv("go_sidb/con/enrichment_input_con/con_petiole_v_root_root_up.GOseq.enriched")
+con_petiole_v_vegetative_bud_vegetative_bud_up_enriched <- read_tsv("go_sidb/con/enrichment_input_con/con_petiole_v_vegetative_bud_vegetative_bud_up.GOseq.enriched")
+con_root_v_vegetative_bud_vegetative_bud_up_enriched <- read_tsv("go_sidb/con/enrichment_input_con/con_root_v_vegetative_bud_vegetative_bud_up.GOseq.enriched")
+
+con_female_flower_v_leaf_leaf_down_enriched <- read_tsv("go_sidb/con/enrichment_input_con/con_female_flower_v_leaf_leaf_down.GOseq.enriched")
+con_female_flower_v_male_flower_male_flower_down_enriched <- read_tsv("go_sidb/con/enrichment_input_con/con_female_flower_v_male_flower_male_flower_down.GOseq.enriched")
+con_female_flower_v_petiole_petiole_down_enriched <- read_tsv("go_sidb/con/enrichment_input_con/con_female_flower_v_petiole_petiole_down.GOseq.enriched")
+con_female_flower_v_root_root_down_enriched <- read_tsv("go_sidb/con/enrichment_input_con/con_female_flower_v_root_root_down.GOseq.enriched")
+con_female_flower_v_vegetative_bud_vegetative_bud_down_enriched <- read_tsv("go_sidb/con/enrichment_input_con/con_female_flower_v_vegetative_bud_vegetative_bud_down.GOseq.enriched")
+con_leaf_v_male_flower_male_flower_down_enriched <- read_tsv("go_sidb/con/enrichment_input_con/con_leaf_v_male_flower_male_flower_down.GOseq.enriched")
+con_leaf_v_petiole_petiole_down_enriched <- read_tsv("go_sidb/con/enrichment_input_con/con_leaf_v_petiole_petiole_down.GOseq.enriched")
+con_leaf_v_root_root_down_enriched <- read_tsv("go_sidb/con/enrichment_input_con/con_leaf_v_root_root_down.GOseq.enriched")
+con_leaf_v_vegetative_bud_vegetative_bud_down_enriched <- read_tsv("go_sidb/con/enrichment_input_con/con_leaf_v_vegetative_bud_vegetative_bud_down.GOseq.enriched")
+con_male_flower_v_petiole_petiole_down_enriched <- read_tsv("go_sidb/con/enrichment_input_con/con_male_flower_v_petiole_petiole_down.GOseq.enriched")
+con_male_flower_v_root_root_down_enriched <- read_tsv("go_sidb/con/enrichment_input_con/con_male_flower_v_root_root_down.GOseq.enriched")
+con_male_flower_v_vegetative_bud_vegetative_bud_down_enriched <- read_tsv("go_sidb/con/enrichment_input_con/con_male_flower_v_vegetative_bud_vegetative_bud_down.GOseq.enriched")
+con_petiole_v_root_root_down_enriched <- read_tsv("go_sidb/con/enrichment_input_con/con_petiole_v_root_root_down.GOseq.enriched")
+con_petiole_v_vegetative_bud_vegetative_bud_down_enriched <- read_tsv("go_sidb/con/enrichment_input_con/con_petiole_v_vegetative_bud_vegetative_bud_down.GOseq.enriched")
+con_root_v_vegetative_bud_vegetative_bud_down_enriched <- read_tsv("go_sidb/con/enrichment_input_con/con_root_v_vegetative_bud_vegetative_bud_down.GOseq.enriched")
+
+ple_female_flower_v_leaf_leaf_up_enriched <- read_tsv("go_sidb/ple/enrichment_input_ple/ple_female_flower_v_leaf_leaf_up.GOseq.enriched")
+ple_female_flower_v_male_flower_male_flower_up_enriched <- read_tsv("go_sidb/ple/enrichment_input_ple/ple_female_flower_v_male_flower_male_flower_up.GOseq.enriched")
+ple_female_flower_v_petiole_petiole_up_enriched <- read_tsv("go_sidb/ple/enrichment_input_ple/ple_female_flower_v_petiole_petiole_up.GOseq.enriched")
+ple_female_flower_v_root_root_up_enriched <- read_tsv("go_sidb/ple/enrichment_input_ple/ple_female_flower_v_root_root_up.GOseq.enriched")
+ple_female_flower_v_vegetative_bud_vegetative_bud_up_enriched <- read_tsv("go_sidb/ple/enrichment_input_ple/ple_female_flower_v_vegetative_bud_vegetative_bud_up.GOseq.enriched")
+ple_leaf_v_male_flower_male_flower_up_enriched <- read_tsv("go_sidb/ple/enrichment_input_ple/ple_leaf_v_male_flower_male_flower_up.GOseq.enriched")
+ple_leaf_v_petiole_petiole_up_enriched <- read_tsv("go_sidb/ple/enrichment_input_ple/ple_leaf_v_petiole_petiole_up.GOseq.enriched")
+ple_leaf_v_root_root_up_enriched <- read_tsv("go_sidb/ple/enrichment_input_ple/ple_leaf_v_root_root_up.GOseq.enriched")
+ple_leaf_v_vegetative_bud_vegetative_bud_up_enriched <- read_tsv("go_sidb/ple/enrichment_input_ple/ple_leaf_v_vegetative_bud_vegetative_bud_up.GOseq.enriched")
+ple_male_flower_v_petiole_petiole_up_enriched <- read_tsv("go_sidb/ple/enrichment_input_ple/ple_male_flower_v_petiole_petiole_up.GOseq.enriched")
+ple_male_flower_v_root_root_up_enriched <- read_tsv("go_sidb/ple/enrichment_input_ple/ple_male_flower_v_root_root_up.GOseq.enriched")
+ple_male_flower_v_vegetative_bud_vegetative_bud_up_enriched <- read_tsv("go_sidb/ple/enrichment_input_ple/ple_male_flower_v_vegetative_bud_vegetative_bud_up.GOseq.enriched")
+ple_petiole_v_root_root_up_enriched <- read_tsv("go_sidb/ple/enrichment_input_ple/ple_petiole_v_root_root_up.GOseq.enriched")
+ple_petiole_v_vegetative_bud_vegetative_bud_up_enriched <- read_tsv("go_sidb/ple/enrichment_input_ple/ple_petiole_v_vegetative_bud_vegetative_bud_up.GOseq.enriched")
+ple_root_v_vegetative_bud_vegetative_bud_up_enriched <- read_tsv("go_sidb/ple/enrichment_input_ple/ple_root_v_vegetative_bud_vegetative_bud_up.GOseq.enriched")
+
+ple_female_flower_v_leaf_leaf_down_enriched <- read_tsv("go_sidb/ple/enrichment_input_ple/ple_female_flower_v_leaf_leaf_down.GOseq.enriched")
+ple_female_flower_v_male_flower_male_flower_down_enriched <- read_tsv("go_sidb/ple/enrichment_input_ple/ple_female_flower_v_male_flower_male_flower_down.GOseq.enriched")
+ple_female_flower_v_petiole_petiole_down_enriched <- read_tsv("go_sidb/ple/enrichment_input_ple/ple_female_flower_v_petiole_petiole_down.GOseq.enriched")
+ple_female_flower_v_root_root_down_enriched <- read_tsv("go_sidb/ple/enrichment_input_ple/ple_female_flower_v_root_root_down.GOseq.enriched")
+ple_female_flower_v_vegetative_bud_vegetative_bud_down_enriched <- read_tsv("go_sidb/ple/enrichment_input_ple/ple_female_flower_v_vegetative_bud_vegetative_bud_down.GOseq.enriched")
+ple_leaf_v_male_flower_male_flower_down_enriched <- read_tsv("go_sidb/ple/enrichment_input_ple/ple_leaf_v_male_flower_male_flower_down.GOseq.enriched")
+ple_leaf_v_petiole_petiole_down_enriched <- read_tsv("go_sidb/ple/enrichment_input_ple/ple_leaf_v_petiole_petiole_down.GOseq.enriched")
+ple_leaf_v_root_root_down_enriched <- read_tsv("go_sidb/ple/enrichment_input_ple/ple_leaf_v_root_root_down.GOseq.enriched")
+ple_leaf_v_vegetative_bud_vegetative_bud_down_enriched <- read_tsv("go_sidb/ple/enrichment_input_ple/ple_leaf_v_vegetative_bud_vegetative_bud_down.GOseq.enriched")
+ple_male_flower_v_petiole_petiole_down_enriched <- read_tsv("go_sidb/ple/enrichment_input_ple/ple_male_flower_v_petiole_petiole_down.GOseq.enriched")
+ple_male_flower_v_root_root_down_enriched <- read_tsv("go_sidb/ple/enrichment_input_ple/ple_male_flower_v_root_root_down.GOseq.enriched")
+ple_male_flower_v_vegetative_bud_vegetative_bud_down_enriched <- read_tsv("go_sidb/ple/enrichment_input_ple/ple_male_flower_v_vegetative_bud_vegetative_bud_down.GOseq.enriched")
+ple_petiole_v_root_root_down_enriched <- read_tsv("go_sidb/ple/enrichment_input_ple/ple_petiole_v_root_root_down.GOseq.enriched")
+ple_petiole_v_vegetative_bud_vegetative_bud_down_enriched <- read_tsv("go_sidb/ple/enrichment_input_ple/ple_petiole_v_vegetative_bud_vegetative_bud_down.GOseq.enriched")
+ple_root_v_vegetative_bud_vegetative_bud_down_enriched <- read_tsv("go_sidb/ple/enrichment_input_ple/ple_root_v_vegetative_bud_vegetative_bud_down.GOseq.enriched")
+
+
+
+
+con_up_enriched_list<-list(con_female_flower_v_leaf_leaf_up_enriched,
+con_female_flower_v_male_flower_male_flower_up_enriched,
+con_female_flower_v_petiole_petiole_up_enriched,
+con_female_flower_v_root_root_up_enriched,
+con_female_flower_v_vegetative_bud_vegetative_bud_up_enriched,
+con_leaf_v_male_flower_male_flower_up_enriched,
+con_leaf_v_petiole_petiole_up_enriched,
+con_leaf_v_root_root_up_enriched,
+con_leaf_v_vegetative_bud_vegetative_bud_up_enriched,
+con_male_flower_v_petiole_petiole_up_enriched,
+con_male_flower_v_root_root_up_enriched,
+con_male_flower_v_vegetative_bud_vegetative_bud_up_enriched,
+con_petiole_v_root_root_up_enriched,
+con_petiole_v_vegetative_bud_vegetative_bud_up_enriched,
+con_root_v_vegetative_bud_vegetative_bud_up_enriched)
+
+con_down_enriched_list<-list(con_female_flower_v_leaf_leaf_down_enriched,
+con_female_flower_v_male_flower_male_flower_down_enriched,
+con_female_flower_v_petiole_petiole_down_enriched,
+con_female_flower_v_root_root_down_enriched,
+con_female_flower_v_vegetative_bud_vegetative_bud_down_enriched,
+con_leaf_v_male_flower_male_flower_down_enriched,
+con_leaf_v_petiole_petiole_down_enriched,
+con_leaf_v_root_root_down_enriched,
+con_leaf_v_vegetative_bud_vegetative_bud_down_enriched,
+con_male_flower_v_petiole_petiole_down_enriched,
+con_male_flower_v_root_root_down_enriched,
+con_male_flower_v_vegetative_bud_vegetative_bud_down_enriched,
+con_petiole_v_root_root_down_enriched,
+con_petiole_v_vegetative_bud_vegetative_bud_down_enriched,
+con_root_v_vegetative_bud_vegetative_bud_down_enriched)
+
+
+
+
+ple_up_enriched_list<-list(ple_female_flower_v_leaf_leaf_up_enriched,
+ple_female_flower_v_male_flower_male_flower_up_enriched,
+ple_female_flower_v_petiole_petiole_up_enriched,
+ple_female_flower_v_root_root_up_enriched,
+ple_female_flower_v_vegetative_bud_vegetative_bud_up_enriched,
+ple_leaf_v_male_flower_male_flower_up_enriched,
+ple_leaf_v_petiole_petiole_up_enriched,
+ple_leaf_v_root_root_up_enriched,
+ple_leaf_v_vegetative_bud_vegetative_bud_up_enriched,
+ple_male_flower_v_petiole_petiole_up_enriched,
+ple_male_flower_v_root_root_up_enriched,
+ple_male_flower_v_vegetative_bud_vegetative_bud_up_enriched,
+ple_petiole_v_root_root_up_enriched,
+ple_petiole_v_vegetative_bud_vegetative_bud_up_enriched,
+ple_root_v_vegetative_bud_vegetative_bud_up_enriched)
+
+ple_down_enriched_list<-list(ple_female_flower_v_leaf_leaf_down_enriched,
+ple_female_flower_v_male_flower_male_flower_down_enriched,
+ple_female_flower_v_petiole_petiole_down_enriched,
+ple_female_flower_v_root_root_down_enriched,
+ple_female_flower_v_vegetative_bud_vegetative_bud_down_enriched,
+ple_leaf_v_male_flower_male_flower_down_enriched,
+ple_leaf_v_petiole_petiole_down_enriched,
+ple_leaf_v_root_root_down_enriched,
+ple_leaf_v_vegetative_bud_vegetative_bud_down_enriched,
+ple_male_flower_v_petiole_petiole_down_enriched,
+ple_male_flower_v_root_root_down_enriched,
+ple_male_flower_v_vegetative_bud_vegetative_bud_down_enriched,
+ple_petiole_v_root_root_down_enriched,
+ple_petiole_v_vegetative_bud_vegetative_bud_down_enriched,
+ple_root_v_vegetative_bud_vegetative_bud_down_enriched)
+
+
+
+con_enriched_up_count<-sapply(con_up_enriched_list, function(x) x %>% filter(over_represented_FDR < 0.05) %>% dplyr::select(term) %>% data.frame() %>% nrow())
+con_enriched_down_count<-sapply(con_down_enriched_list, function(x) x %>% filter(over_represented_FDR < 0.05) %>% dplyr::select(term) %>% data.frame() %>% nrow())
+
+ple_enriched_up_count<-sapply(ple_up_enriched_list, function(x) x %>% filter(over_represented_FDR < 0.05) %>% dplyr::select(term) %>% data.frame() %>% nrow())
+ple_enriched_down_count<-sapply(ple_down_enriched_list, function(x) x %>% filter(over_represented_FDR < 0.05) %>% dplyr::select(term) %>% data.frame() %>% nrow())
+
+
+
+comparisons<-c("fem_flower vs leaf",
+"female flower vs male flower",
+"female flower vs petiole",
+"female flower vs root",
+"female flower vs veg bud",
+"leaf vs male flower",
+"leaf vs petiole",
+"leaf vs root",
+"leaf vs veg bud",
+"male flower vs petiole",
+"male flower vs root",
+"male flower vs veg bud",
+"petiole vs root",
+"petiole vs veg bud",
+"root vs veg bud")
+
+
+
+con_up_df<-data.frame(comparison=comparisons, 
+           count=con_enriched_up_count, 
+           species="B. conchifolia",
+           direction = "up")
+
+con_down_df<-data.frame(comparison=comparisons, 
+           count=con_enriched_down_count, 
+           species="B. conchifolia",
+           direction = "down")
+
+
+ple_up_df<-data.frame(comparison=comparisons, 
+           count=ple_enriched_up_count, 
+           species="B. plebeja",
+           direction = "up")
+
+ple_down_df<-data.frame(comparison=comparisons, 
+           count=ple_enriched_down_count, 
+           species="B. plebeja",
+           direction = "down")
+
+
+de_df<-rbind(con_up_df, con_down_df, ple_up_df, ple_down_df)
+
+ggplot(de_df, aes(x=comparison, y=count, colour=species, fill=species)) + 
+  geom_bar(stat="identity", position = "dodge") + facet_grid(rows = vars(direction)) + coord_flip() 
+  
+#  theme(axis.text.y=element_text(size=12), 
+#        axis.title.x=element_blank(), 
+#        axis.title.y=element_blank())
 
-#G = female flower = intercept
-#H = leaf = coef 2
-#I = male flower = coef 3
-#J = petiole = coef 4
-#K = root = coef 5
-#L = vegetative bud = coef 6
-
-ple_fflower_v_leaf_et <- exactTest(ple_d, pair=c("G","H"))
-ple_fflower_v_mflower_et <- exactTest(ple_d, pair=c("G","I"))
-ple_fflower_v_petiole_et <- exactTest(ple_d, pair=c("G","J"))
-ple_fflower_v_root_et <- exactTest(ple_d, pair=c("G","K"))
-ple_fflower_v_vbud_et <- exactTest(ple_d, pair=c("G","L"))
-ple_leaf_v_mflower_et <- exactTest(ple_d, pair=c("H","I"))
-ple_leaf_v_petiole_et <- exactTest(ple_d, pair=c("H","J"))
-ple_leaf_v_root_et <- exactTest(ple_d, pair=c("H","K"))
-ple_leaf_v_vbud_et <- exactTest(ple_d, pair=c("H","L"))
-ple_mflower_v_petiole_et <- exactTest(ple_d, pair=c("I","J"))
-ple_mflower_v_root_et <- exactTest(ple_d, pair=c("I","K"))
-ple_mflower_v_vbud_et <- exactTest(ple_d, pair=c("I","L"))
-ple_petiole_v_root_et <- exactTest(ple_d, pair=c("J","K"))
-ple_petiole_v_vbud_et <- exactTest(ple_d, pair=c("J","L"))
-ple_root_v_vbud_et <- exactTest(ple_d, pair=c("K","L"))
 
-ple_fflower_v_leaf_toptags<-ple_fflower_v_leaf_et %>% topTags(n=10000) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(ple_go, by="transcript_id") 
-ple_fflower_v_mflower_toptags<-ple_fflower_v_mflower_et %>% topTags(n=10000) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(ple_go, by="transcript_id") 
-ple_fflower_v_petiole_toptags<-ple_fflower_v_petiole_et %>% topTags(n=10000) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(ple_go, by="transcript_id") 
-ple_fflower_v_root_toptags<-ple_fflower_v_root_et %>% topTags(n=10000) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(ple_go, by="transcript_id") 
-ple_fflower_v_vbud_toptags<-ple_fflower_v_vbud_et %>% topTags(n=10000) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(ple_go, by="transcript_id") 
-ple_leaf_v_mflower_toptags<-ple_leaf_v_mflower_et %>% topTags(n=10000) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(ple_go, by="transcript_id") 
-ple_leaf_v_petiole_toptags<-ple_leaf_v_petiole_et %>% topTags(n=10000) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(ple_go, by="transcript_id") 
-ple_leaf_v_root_toptags<-ple_leaf_v_root_et %>% topTags(n=10000) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(ple_go, by="transcript_id") 
-ple_leaf_v_vbud_toptags<-ple_leaf_v_vbud_et %>% topTags(n=10000) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(ple_go, by="transcript_id") 
-ple_mflower_v_petiole_toptags<-ple_mflower_v_petiole_et %>% topTags(n=10000) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(ple_go, by="transcript_id") 
-ple_mflower_v_root_toptags<-ple_mflower_v_root_et %>% topTags(n=10000) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(ple_go, by="transcript_id") 
-ple_mflower_v_vbud_toptags<-ple_mflower_v_vbud_et %>% topTags(n=10000) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(ple_go, by="transcript_id") 
-ple_petiole_v_root_toptags<-ple_petiole_v_root_et %>% topTags(n=10000) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(ple_go, by="transcript_id") 
-ple_petiole_v_vbud_toptags<-ple_petiole_v_vbud_et %>% topTags(n=10000) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(ple_go, by="transcript_id") 
-ple_root_v_vbud_toptags<-ple_root_v_vbud_et %>% topTags(n=10000) %>% data.frame() %>% rownames_to_column("transcript_id") %>% inner_join(ple_go, by="transcript_id") 
 
 
 
-nrow(ple_fflower_v_leaf_toptags[ple_fflower_v_leaf_toptags$FDR < 0.05,])
-nrow(ple_fflower_v_mflower_toptags[ple_fflower_v_mflower_toptags$FDR < 0.05,])
-nrow(ple_fflower_v_petiole_toptags[ple_fflower_v_petiole_toptags$FDR < 0.05,])
-nrow(ple_fflower_v_root_toptags[ple_fflower_v_root_toptags$FDR < 0.05,])
-nrow(ple_fflower_v_vbud_toptags[ple_fflower_v_vbud_toptags$FDR < 0.05,])
-nrow(ple_leaf_v_mflower_toptags[ple_leaf_v_mflower_toptags$FDR < 0.05,])
-nrow(ple_leaf_v_petiole_toptags[ple_leaf_v_petiole_toptags$FDR < 0.05,])
-nrow(ple_leaf_v_root_toptags[ple_leaf_v_root_toptags$FDR < 0.05,])
-nrow(ple_leaf_v_vbud_toptags[ple_leaf_v_vbud_toptags$FDR < 0.05,])
-nrow(ple_mflower_v_petiole_toptags[ple_mflower_v_petiole_toptags$FDR < 0.05,])
-nrow(ple_mflower_v_root_toptags[ple_mflower_v_root_toptags$FDR < 0.05,])
-nrow(ple_mflower_v_vbud_toptags[ple_mflower_v_vbud_toptags$FDR < 0.05,])
-nrow(ple_petiole_v_root_toptags[ple_petiole_v_root_toptags$FDR < 0.05,])
-nrow(ple_petiole_v_vbud_toptags[ple_petiole_v_vbud_toptags$FDR < 0.05,])
-nrow(ple_root_v_vbud_toptags[ple_root_v_vbud_toptags$FDR < 0.05,])
 
 
 
 
 
-ple_fflower_v_leaf_leaf_up<-ple_fflower_v_leaf_toptags%>% filter(FDR < 0.05 & logFC > 2) %>% dplyr::select(transcript_id)
-write.table(ple_fflower_v_leaf_leaf_up, file="ple_fflower_v_leaf_leaf_up", quote=FALSE, row.names = FALSE, col.names = FALSE)
 
-ple_fflower_v_leaf_leaf_down<-ple_fflower_v_leaf_toptags%>% filter(FDR < 0.05 & logFC < -2) %>% dplyr::select(transcript_id)
-write.table(ple_fflower_v_leaf_leaf_down, file="ple_fflower_v_leaf_leaf_down", quote=FALSE, row.names = FALSE, col.names = FALSE)
 
-ple_fflower_v_mflower_mflower_up<-ple_fflower_v_mflower_toptags%>% filter(FDR < 0.05 & logFC > 2) %>% dplyr::select(transcript_id)
-write.table(ple_fflower_v_mflower_mflower_up, file="ple_fflower_v_mflower_mflower_up", quote=FALSE, row.names = FALSE, col.names = FALSE)
 
-ple_fflower_v_mflower_mflower_down<-ple_fflower_v_mflower_toptags%>% filter(FDR < 0.05 & logFC < -2) %>% dplyr::select(transcript_id)
-write.table(ple_fflower_v_mflower_mflower_down, file="ple_fflower_v_mflower_mflower_down", quote=FALSE, row.names = FALSE, col.names = FALSE)
 
-ple_fflower_v_petiole_petiole_up<-ple_fflower_v_petiole_toptags%>% filter(FDR < 0.05 & logFC > 2) %>% dplyr::select(transcript_id)
-write.table(ple_fflower_v_petiole_petiole_up, file="ple_fflower_v_petiole_petiole_up", quote=FALSE, row.names = FALSE, col.names = FALSE)
-
-ple_fflower_v_petiole_petiole_down<-ple_fflower_v_petiole_toptags%>% filter(FDR < 0.05 & logFC < -2) %>% dplyr::select(transcript_id)
-write.table(ple_fflower_v_petiole_petiole_down, file="ple_fflower_v_petiole_petiole_down", quote=FALSE, row.names = FALSE, col.names = FALSE)
-
-ple_fflower_v_root_root_up<-ple_fflower_v_root_toptags%>% filter(FDR < 0.05 & logFC > 2) %>% dplyr::select(transcript_id)
-write.table(ple_fflower_v_root_root_up, file="ple_fflower_v_root_root_up", quote=FALSE, row.names = FALSE, col.names = FALSE)
-
-ple_fflower_v_root_root_down<-ple_fflower_v_root_toptags%>% filter(FDR < 0.05 & logFC < -2) %>% dplyr::select(transcript_id)
-write.table(ple_fflower_v_root_root_down, file="ple_fflower_v_root_root_down", quote=FALSE, row.names = FALSE, col.names = FALSE)
-
-ple_fflower_v_vbud_vbud_up<-ple_fflower_v_vbud_toptags%>% filter(FDR < 0.05 & logFC > 2) %>% dplyr::select(transcript_id)
-write.table(ple_fflower_v_vbud_vbud_up, file="ple_fflower_v_vbud_vbud_up", quote=FALSE, row.names = FALSE, col.names = FALSE)
-
-ple_fflower_v_vbud_vbud_down<-ple_fflower_v_vbud_toptags%>% filter(FDR < 0.05 & logFC < -2) %>% dplyr::select(transcript_id)
-write.table(ple_fflower_v_vbud_vbud_down, file="ple_fflower_v_vbud_vbud_down", quote=FALSE, row.names = FALSE, col.names = FALSE)
-
-ple_leaf_v_mflower_mflower_up<-ple_leaf_v_mflower_toptags%>% filter(FDR < 0.05 & logFC > 2) %>% dplyr::select(transcript_id)
-write.table(ple_leaf_v_mflower_mflower_up, file="ple_leaf_v_mflower_mflower_up", quote=FALSE, row.names = FALSE, col.names = FALSE)
-
-ple_leaf_v_mflower_mflower_down<-ple_leaf_v_mflower_toptags%>% filter(FDR < 0.05 & logFC < -2) %>% dplyr::select(transcript_id)
-write.table(ple_leaf_v_mflower_mflower_down, file="ple_leaf_v_mflower_mflower_down", quote=FALSE, row.names = FALSE, col.names = FALSE)
-
-ple_leaf_v_petiole_petiole_up<-ple_leaf_v_petiole_toptags%>% filter(FDR < 0.05 & logFC > 2) %>% dplyr::select(transcript_id)
-write.table(ple_leaf_v_petiole_petiole_up, file="ple_leaf_v_petiole_petiole_up", quote=FALSE, row.names = FALSE, col.names = FALSE)
-
-ple_leaf_v_petiole_petiole_down<-ple_leaf_v_petiole_toptags%>% filter(FDR < 0.05 & logFC < -2) %>% dplyr::select(transcript_id)
-write.table(ple_leaf_v_petiole_petiole_down, file="ple_leaf_v_petiole_petiole_down", quote=FALSE, row.names = FALSE, col.names = FALSE)
-
-ple_leaf_v_root_root_up<-ple_leaf_v_root_toptags%>% filter(FDR < 0.05 & logFC > 2) %>% dplyr::select(transcript_id)
-write.table(ple_leaf_v_root_root_up, file="ple_leaf_v_root_root_up", quote=FALSE, row.names = FALSE, col.names = FALSE)
-
-ple_leaf_v_root_root_down<-ple_leaf_v_root_toptags%>% filter(FDR < 0.05 & logFC < -2) %>% dplyr::select(transcript_id)
-write.table(ple_leaf_v_root_root_down, file="ple_leaf_v_root_root_down", quote=FALSE, row.names = FALSE, col.names = FALSE)
-
-ple_leaf_v_vbud_vbud_up<-ple_leaf_v_vbud_toptags%>% filter(FDR < 0.05 & logFC > 2) %>% dplyr::select(transcript_id)
-write.table(ple_leaf_v_vbud_vbud_up, file="ple_leaf_v_vbud_vbud_up", quote=FALSE, row.names = FALSE, col.names = FALSE)
-
-ple_leaf_v_vbud_vbud_down<-ple_leaf_v_vbud_toptags%>% filter(FDR < 0.05 & logFC < -2) %>% dplyr::select(transcript_id)
-write.table(ple_leaf_v_vbud_vbud_down, file="ple_leaf_v_vbud_vbud_down", quote=FALSE, row.names = FALSE, col.names = FALSE)
-
-ple_mflower_v_petiole_petiole_up<-ple_mflower_v_petiole_toptags%>% filter(FDR < 0.05 & logFC > 2) %>% dplyr::select(transcript_id)
-write.table(ple_mflower_v_petiole_petiole_up, file="ple_mflower_v_petiole_petiole_up", quote=FALSE, row.names = FALSE, col.names = FALSE)
-
-ple_mflower_v_petiole_petiole_down<-ple_mflower_v_petiole_toptags%>% filter(FDR < 0.05 & logFC < -2) %>% dplyr::select(transcript_id)
-write.table(ple_mflower_v_petiole_petiole_down, file="ple_mflower_v_petiole_petiole_down", quote=FALSE, row.names = FALSE, col.names = FALSE)
-
-ple_mflower_v_root_root_up<-ple_mflower_v_root_toptags%>% filter(FDR < 0.05 & logFC > 2) %>% dplyr::select(transcript_id)
-write.table(ple_mflower_v_root_root_up, file="ple_mflower_v_root_root_up", quote=FALSE, row.names = FALSE, col.names = FALSE)
-
-ple_mflower_v_root_root_down<-ple_mflower_v_root_toptags%>% filter(FDR < 0.05 & logFC < -2) %>% dplyr::select(transcript_id)
-write.table(ple_mflower_v_root_root_down, file="ple_mflower_v_root_root_down", quote=FALSE, row.names = FALSE, col.names = FALSE)
-
-ple_mflower_v_vbud_vbud_up<-ple_mflower_v_vbud_toptags%>% filter(FDR < 0.05 & logFC > 2) %>% dplyr::select(transcript_id)
-write.table(ple_mflower_v_vbud_vbud_up, file="ple_mflower_v_vbud_vbud_up", quote=FALSE, row.names = FALSE, col.names = FALSE)
-
-ple_mflower_v_vbud_vbud_down<-ple_mflower_v_vbud_toptags%>% filter(FDR < 0.05 & logFC < -2) %>% dplyr::select(transcript_id)
-write.table(ple_mflower_v_vbud_vbud_down, file="ple_mflower_v_vbud_vbud_down", quote=FALSE, row.names = FALSE, col.names = FALSE)
-
-ple_petiole_v_root_root_up<-ple_petiole_v_root_toptags%>% filter(FDR < 0.05 & logFC > 2) %>% dplyr::select(transcript_id)
-write.table(ple_petiole_v_root_root_up, file="ple_petiole_v_root_root_up", quote=FALSE, row.names = FALSE, col.names = FALSE)
-
-ple_petiole_v_root_root_down<-ple_petiole_v_root_toptags%>% filter(FDR < 0.05 & logFC < -2) %>% dplyr::select(transcript_id)
-write.table(ple_petiole_v_root_root_down, file="ple_petiole_v_root_root_down", quote=FALSE, row.names = FALSE, col.names = FALSE)
-
-ple_petiole_v_vbud_vbud_up<-ple_petiole_v_vbud_toptags%>% filter(FDR < 0.05 & logFC > 2) %>% dplyr::select(transcript_id)
-write.table(ple_petiole_v_vbud_vbud_up, file="ple_petiole_v_vbud_vbud_up", quote=FALSE, row.names = FALSE, col.names = FALSE)
-
-ple_petiole_v_vbud_vbud_down<-ple_petiole_v_vbud_toptags%>% filter(FDR < 0.05 & logFC < -2) %>% dplyr::select(transcript_id)
-write.table(ple_petiole_v_vbud_vbud_down, file="ple_petiole_v_vbud_vbud_down", quote=FALSE, row.names = FALSE, col.names = FALSE)
-
-ple_root_v_vbud_vbud_up<-ple_root_v_vbud_toptags%>% filter(FDR < 0.05 & logFC > 2) %>% dplyr::select(transcript_id)
-write.table(ple_root_v_vbud_vbud_up, file="ple_root_v_vbud_vbud_up", quote=FALSE, row.names = FALSE, col.names = FALSE)
-
-ple_root_v_vbud_vbud_down<-ple_root_v_vbud_toptags%>% filter(FDR < 0.05 & logFC < -2) %>% dplyr::select(transcript_id)
-write.table(ple_root_v_vbud_vbud_down, file="ple_root_v_vbud_vbud_down", quote=FALSE, row.names = FALSE, col.names = FALSE)
-
-
-####################################################
-
-
-con_fflower_v_leaf_leaf_up<-con_fflower_v_leaf_toptags%>% filter(FDR < 0.05 & logFC > 2) %>% dplyr::select(transcript_id)
-write.table(con_fflower_v_leaf_leaf_up, file="con_fflower_v_leaf_leaf_up", quote=FALSE, row.names = FALSE, col.names = FALSE)
-
-con_fflower_v_leaf_leaf_down<-con_fflower_v_leaf_toptags%>% filter(FDR < 0.05 & logFC < -2) %>% dplyr::select(transcript_id)
-write.table(con_fflower_v_leaf_leaf_down, file="con_fflower_v_leaf_leaf_down", quote=FALSE, row.names = FALSE, col.names = FALSE)
-
-con_fflower_v_mflower_mflower_up<-con_fflower_v_mflower_toptags%>% filter(FDR < 0.05 & logFC > 2) %>% dplyr::select(transcript_id)
-write.table(con_fflower_v_mflower_mflower_up, file="con_fflower_v_mflower_mflower_up", quote=FALSE, row.names = FALSE, col.names = FALSE)
-
-con_fflower_v_mflower_mflower_down<-con_fflower_v_mflower_toptags%>% filter(FDR < 0.05 & logFC < -2) %>% dplyr::select(transcript_id)
-write.table(con_fflower_v_mflower_mflower_down, file="con_fflower_v_mflower_mflower_down", quote=FALSE, row.names = FALSE, col.names = FALSE)
-
-con_fflower_v_petiole_petiole_up<-con_fflower_v_petiole_toptags%>% filter(FDR < 0.05 & logFC > 2) %>% dplyr::select(transcript_id)
-write.table(con_fflower_v_petiole_petiole_up, file="con_fflower_v_petiole_petiole_up", quote=FALSE, row.names = FALSE, col.names = FALSE)
-
-con_fflower_v_petiole_petiole_down<-con_fflower_v_petiole_toptags%>% filter(FDR < 0.05 & logFC < -2) %>% dplyr::select(transcript_id)
-write.table(con_fflower_v_petiole_petiole_down, file="con_fflower_v_petiole_petiole_down", quote=FALSE, row.names = FALSE, col.names = FALSE)
-
-con_fflower_v_root_root_up<-con_fflower_v_root_toptags%>% filter(FDR < 0.05 & logFC > 2) %>% dplyr::select(transcript_id)
-write.table(con_fflower_v_root_root_up, file="con_fflower_v_root_root_up", quote=FALSE, row.names = FALSE, col.names = FALSE)
-
-con_fflower_v_root_root_down<-con_fflower_v_root_toptags%>% filter(FDR < 0.05 & logFC < -2) %>% dplyr::select(transcript_id)
-write.table(con_fflower_v_root_root_down, file="con_fflower_v_root_root_down", quote=FALSE, row.names = FALSE, col.names = FALSE)
-
-con_fflower_v_vbud_vbud_up<-con_fflower_v_vbud_toptags%>% filter(FDR < 0.05 & logFC > 2) %>% dplyr::select(transcript_id)
-write.table(con_fflower_v_vbud_vbud_up, file="con_fflower_v_vbud_vbud_up", quote=FALSE, row.names = FALSE, col.names = FALSE)
-
-con_fflower_v_vbud_vbud_down<-con_fflower_v_vbud_toptags%>% filter(FDR < 0.05 & logFC < -2) %>% dplyr::select(transcript_id)
-write.table(con_fflower_v_vbud_vbud_down, file="con_fflower_v_vbud_vbud_down", quote=FALSE, row.names = FALSE, col.names = FALSE)
-
-con_leaf_v_mflower_mflower_up<-con_leaf_v_mflower_toptags%>% filter(FDR < 0.05 & logFC > 2) %>% dplyr::select(transcript_id)
-write.table(con_leaf_v_mflower_mflower_up, file="con_leaf_v_mflower_mflower_up", quote=FALSE, row.names = FALSE, col.names = FALSE)
-
-con_leaf_v_mflower_mflower_down<-con_leaf_v_mflower_toptags%>% filter(FDR < 0.05 & logFC < -2) %>% dplyr::select(transcript_id)
-write.table(con_leaf_v_mflower_mflower_down, file="con_leaf_v_mflower_mflower_down", quote=FALSE, row.names = FALSE, col.names = FALSE)
-
-con_leaf_v_petiole_petiole_up<-con_leaf_v_petiole_toptags%>% filter(FDR < 0.05 & logFC > 2) %>% dplyr::select(transcript_id)
-write.table(con_leaf_v_petiole_petiole_up, file="con_leaf_v_petiole_petiole_up", quote=FALSE, row.names = FALSE, col.names = FALSE)
-
-con_leaf_v_petiole_petiole_down<-con_leaf_v_petiole_toptags%>% filter(FDR < 0.05 & logFC < -2) %>% dplyr::select(transcript_id)
-write.table(con_leaf_v_petiole_petiole_down, file="con_leaf_v_petiole_petiole_down", quote=FALSE, row.names = FALSE, col.names = FALSE)
-
-con_leaf_v_root_root_up<-con_leaf_v_root_toptags%>% filter(FDR < 0.05 & logFC > 2) %>% dplyr::select(transcript_id)
-write.table(con_leaf_v_root_root_up, file="con_leaf_v_root_root_up", quote=FALSE, row.names = FALSE, col.names = FALSE)
-
-con_leaf_v_root_root_down<-con_leaf_v_root_toptags%>% filter(FDR < 0.05 & logFC < -2) %>% dplyr::select(transcript_id)
-write.table(con_leaf_v_root_root_down, file="con_leaf_v_root_root_down", quote=FALSE, row.names = FALSE, col.names = FALSE)
-
-con_leaf_v_vbud_vbud_up<-con_leaf_v_vbud_toptags%>% filter(FDR < 0.05 & logFC > 2) %>% dplyr::select(transcript_id)
-write.table(con_leaf_v_vbud_vbud_up, file="con_leaf_v_vbud_vbud_up", quote=FALSE, row.names = FALSE, col.names = FALSE)
-
-con_leaf_v_vbud_vbud_down<-con_leaf_v_vbud_toptags%>% filter(FDR < 0.05 & logFC < -2) %>% dplyr::select(transcript_id)
-write.table(con_leaf_v_vbud_vbud_down, file="con_leaf_v_vbud_vbud_down", quote=FALSE, row.names = FALSE, col.names = FALSE)
-
-con_mflower_v_petiole_petiole_up<-con_mflower_v_petiole_toptags%>% filter(FDR < 0.05 & logFC > 2) %>% dplyr::select(transcript_id)
-write.table(con_mflower_v_petiole_petiole_up, file="con_mflower_v_petiole_petiole_up", quote=FALSE, row.names = FALSE, col.names = FALSE)
-
-con_mflower_v_petiole_petiole_down<-con_mflower_v_petiole_toptags%>% filter(FDR < 0.05 & logFC < -2) %>% dplyr::select(transcript_id)
-write.table(con_mflower_v_petiole_petiole_down, file="con_mflower_v_petiole_petiole_down", quote=FALSE, row.names = FALSE, col.names = FALSE)
-
-con_mflower_v_root_root_up<-con_mflower_v_root_toptags%>% filter(FDR < 0.05 & logFC > 2) %>% dplyr::select(transcript_id)
-write.table(con_mflower_v_root_root_up, file="con_mflower_v_root_root_up", quote=FALSE, row.names = FALSE, col.names = FALSE)
-
-con_mflower_v_root_root_down<-con_mflower_v_root_toptags%>% filter(FDR < 0.05 & logFC < -2) %>% dplyr::select(transcript_id)
-write.table(con_mflower_v_root_root_down, file="con_mflower_v_root_root_down", quote=FALSE, row.names = FALSE, col.names = FALSE)
-
-con_mflower_v_vbud_vbud_up<-con_mflower_v_vbud_toptags%>% filter(FDR < 0.05 & logFC > 2) %>% dplyr::select(transcript_id)
-write.table(con_mflower_v_vbud_vbud_up, file="con_mflower_v_vbud_vbud_up", quote=FALSE, row.names = FALSE, col.names = FALSE)
-
-con_mflower_v_vbud_vbud_down<-con_mflower_v_vbud_toptags%>% filter(FDR < 0.05 & logFC < -2) %>% dplyr::select(transcript_id)
-write.table(con_mflower_v_vbud_vbud_down, file="con_mflower_v_vbud_vbud_down", quote=FALSE, row.names = FALSE, col.names = FALSE)
-
-con_petiole_v_root_root_up<-con_petiole_v_root_toptags%>% filter(FDR < 0.05 & logFC > 2) %>% dplyr::select(transcript_id)
-write.table(con_petiole_v_root_root_up, file="con_petiole_v_root_root_up", quote=FALSE, row.names = FALSE, col.names = FALSE)
-
-con_petiole_v_root_root_down<-con_petiole_v_root_toptags%>% filter(FDR < 0.05 & logFC < -2) %>% dplyr::select(transcript_id)
-write.table(con_petiole_v_root_root_down, file="con_petiole_v_root_root_down", quote=FALSE, row.names = FALSE, col.names = FALSE)
-
-con_petiole_v_vbud_vbud_up<-con_petiole_v_vbud_toptags%>% filter(FDR < 0.05 & logFC > 2) %>% dplyr::select(transcript_id)
-write.table(con_petiole_v_vbud_vbud_up, file="con_petiole_v_vbud_vbud_up", quote=FALSE, row.names = FALSE, col.names = FALSE)
-
-con_petiole_v_vbud_vbud_down<-con_petiole_v_vbud_toptags%>% filter(FDR < 0.05 & logFC < -2) %>% dplyr::select(transcript_id)
-write.table(con_petiole_v_vbud_vbud_down, file="con_petiole_v_vbud_vbud_down", quote=FALSE, row.names = FALSE, col.names = FALSE)
-
-con_root_v_vbud_vbud_up<-con_root_v_vbud_toptags%>% filter(FDR < 0.05 & logFC > 2) %>% dplyr::select(transcript_id)
-write.table(con_root_v_vbud_vbud_up, file="con_root_v_vbud_vbud_up", quote=FALSE, row.names = FALSE, col.names = FALSE)
-
-con_root_v_vbud_vbud_down<-con_root_v_vbud_toptags%>% filter(FDR < 0.05 & logFC < -2) %>% dplyr::select(transcript_id)
-write.table(con_root_v_vbud_vbud_down, file="con_root_v_vbud_vbud_down", quote=FALSE, row.names = FALSE, col.names = FALSE)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# for vebnn diagrams
-
-
-test<-strsplit(con_go$GO_terms, ",")
-names(test)<-con_go$transcript_id
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-ple_fflower_v_leaf_leaf_up
-ple_fflower_v_leaf_leaf_down
-ple_fflower_v_mflower_mflower_up
-ple_fflower_v_mflower_mflower_down
-ple_fflower_v_petiole_petiole_up
-ple_fflower_v_petiole_petiole_down
-ple_fflower_v_root_root_up
-ple_fflower_v_root_root_down
-ple_fflower_v_vbud_vbud_up
-ple_fflower_v_vbud_vbud_down
-ple_leaf_v_mflower_mflower_up
-ple_leaf_v_mflower_mflower_down
-
-ple_leaf_v_petiole_petiole_up
-
-ple_leaf_v_petiole_petiole_down
-
-ple_leaf_v_root_root_up
-
-ple_leaf_v_root_root_down
-
-ple_leaf_v_vbud_vbud_up
-
-ple_leaf_v_vbud_vbud_down
-
-ple_mflower_v_petiole_petiole_up
-
-ple_mflower_v_petiole_petiole_down
-ple_mflower_v_root_root_up
-ple_mflower_v_root_root_down
-ple_mflower_v_vbud_vbud_up
-
-ple_mflower_v_vbud_vbud_down
-
-ple_petiole_v_root_root_up
-
-ple_petiole_v_root_root_down
-
-ple_petiole_v_vbud_vbud_up
-
-ple_petiole_v_vbud_vbud_down
-
-ple_root_v_vbud_vbud_up
-
-ple_root_v_vbud_vbud_down
 
