@@ -714,18 +714,28 @@ all_down<-bind_rows(con_up_labelled, con_down_labelled, ple_up_labelled, ple_dow
 all_up$go_term<-substring(all_up$go_term, 4)
 all_down$go_term<-substring(all_down$go_term, 4)
 
+
+all_con<-bind_rows(con_up_labelled, con_down_labelled, ple_up_labelled, ple_down_labelled) %>% filter(species == "B. conchifolia") %>% data.frame()
+all_ple<-bind_rows(con_up_labelled, con_down_labelled, ple_up_labelled, ple_down_labelled) %>% filter(species == "B. plebeja") %>% data.frame()
+all_con$go_term<-substring(all_con$go_term, 4)
+all_ple$go_term<-substring(all_ple$go_term, 4)
+
 # order the go terms by number DE genes in category for plotting
 all_up$go_term<-factor(all_up$go_term, levels = unique(all_up$go_term[order(all_up$numDEInCat)]))
 all_down$go_term<-factor(all_down$go_term, levels = unique(all_down$go_term[order(all_down$numDEInCat)]))
 
+all_con$go_term<-factor(all_con$go_term, levels = unique(all_con$go_term[order(all_con$numDEInCat)]))
+all_ple$go_term<-factor(all_ple$go_term, levels = unique(all_ple$go_term[order(all_ple$numDEInCat)]))
 
-ggplot(all_up, aes(x=go_term, y=numDEInCat, colour=comparison, fill=comparison)) + 
-  geom_bar(stat="identity", position = "dodge") + coord_flip() + facet_grid(cols = vars(species))
 
-ggplot(all_down, aes(x=go_term, y=numDEInCat, colour=comparison, fill=comparison)) + 
-  geom_bar(stat="identity", position = "dodge") + coord_flip() + facet_grid(cols = vars(species))
+# do it by species, remove direction altogether as it doesnt add much and mnakes the graphs look weird
+ggplot(all_con, aes(x=go_term, y=numDEInCat, colour=comparison, fill=comparison)) + 
+  geom_bar(stat="identity", position = "dodge") + coord_flip()
 
-+ facet_grid(rows = vars(direction)) + coord_flip() 
+ggplot(all_ple, aes(x=go_term, y=numDEInCat, colour=comparison, fill=comparison)) + 
+  geom_bar(stat="identity", position = "dodge") + coord_flip()
+
+
 
 test<-all$go_term[1]
 
