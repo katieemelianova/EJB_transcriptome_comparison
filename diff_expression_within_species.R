@@ -37,8 +37,8 @@ ple_cols<-colnames(ple_counts) %>%
 colnames(con_counts)<-con_cols
 colnames(ple_counts)<-ple_cols
 
-con_lengths<-con_counts %>% select(Length) %>% set_rownames(con_geneid)
-ple_lengths<-ple_counts %>% select(Length) %>% set_rownames(ple_geneid)
+con_lengths<-con_counts %>% dplyr::select(Length) %>% set_rownames(con_geneid)
+ple_lengths<-ple_counts %>% dplyr::select(Length) %>% set_rownames(ple_geneid)
 
 
 # select columns of the counts, excluding chr start end etc info at beginning
@@ -203,7 +203,7 @@ setdiff(a, b)
 # elements in ple but not in con
 setdiff(b, a)
 
-
+length(unique(c(a,b)))
 
 myCol<-c("mistyrose1", "lightskyblue1")
 v<-venn.diagram(list(cat_a=a, cat_b=b), 
@@ -279,10 +279,15 @@ to<-c("Leaf",
 con_de_count<-c(1241, 1444, 1015, 1778, 1226, 2366, 1030, 2018, 1182, 1861, 2766, 2425, 1826, 1221, 1410)
 ple_de_count<-c(1455, 1248, 1205, 2188, 1312, 2592, 1191, 2634, 1579, 1976, 2659, 2235, 1953, 948, 1667)
 
+sum(con_de_count)
+sum(ple_de_count)
+
+
 con_chord_df<-data.frame(from=from, to=to, de_count=con_de_count)
 ple_chord_df<-data.frame(from=from, to=to, de_count=ple_de_count)
 
 pdf('con_circos_plot.pdf')
+par(cex = 2, mar = c(0, 0, 0, 0))
 chordDiagram(con_chord_df, grid.col = circos_cols)
 dev.off()
 circos.clear()
@@ -574,15 +579,49 @@ ple_down_df<-data.frame(comparison=comparisons,
 de_df<-rbind(con_up_df, con_down_df, ple_up_df, ple_down_df)
 
 ggplot(de_df, aes(x=comparison, y=count, colour=species, fill=species)) + 
-  geom_bar(stat="identity", position = "dodge") + facet_grid(rows = vars(direction)) + coord_flip() 
+  geom_bar(stat="identity", position = "dodge", width=0.5) + facet_grid(rows = vars(direction)) + 
+  coord_flip() +
+  labs(x = "GO term", y = "Number DE in Category") +
+  theme(legend.text=element_text(size=10),
+                                 legend.title=element_text(size=15),
+                                 axis.title.x=element_text(size=15), 
+                                 axis.title.y=element_text(size=15),
+                                 axis.text.x= element_text(size=10),
+                                 axis.text.y= element_text(size=10))
+
+
+
+
+
+brks <- seq(-120, 120, 20)
+lbls = paste0(as.character(c(seq(120, 0, -20), seq(20, 120, 20))), "")
+de_df_mirror<-de_df %>% 
+  mutate(count_mirror=ifelse(de_df$direction == "down", -(de_df$count), de_df$count))
   
-#  theme(axis.text.y=element_text(size=12), 
-#        axis.title.x=element_blank(), 
-#        axis.title.y=element_blank())
+de_df_mirror<-de_df_mirror %>%
+  mutate(colour_label = case_when(
+    species == "B. conchifolia" & direction == 'up' ~ "B. conchifolia up",
+    species == "B. conchifolia" & direction == 'down' ~ "B. conchifolia up down",
+    species == "B. plebeja" & direction == 'up' ~ "B. plebeja up",
+    species == "B. plebeja" & direction == 'down' ~ "B. plebeja down"
+  ))
 
 
+ggplot(de_df_mirror, aes(x = comparison, y = count_mirror, fill = colour_label)) +   # Fill column
+  geom_bar(stat = "identity", width = .6) +   # draw the bars
+  scale_y_continuous(breaks = brks,   # Breaks
+                     labels = lbls) + 
+  coord_flip() +
+  scale_fill_manual(values=c("firebrick2", "lightpink2", "skyblue2", "dodgerblue2")) + 
+  theme(legend.text=element_text(size=15),
+        legend.title=element_text(size=15),
+        axis.title.x=element_text(size=15), 
+        axis.title.y=element_text(size=15),
+        axis.text.x= element_text(size=10),
+        axis.text.y= element_text(size=15)) +
+  labs(x = "Comparison", y = "Number of enriched GO terms", fill='')
 
-
+de_df_mirror %>% filter(comparison == "fem_flower vs leaf")
 
 
 
@@ -729,13 +768,58 @@ all_ple$go_term<-factor(all_ple$go_term, levels = unique(all_ple$go_term[order(a
 
 
 # do it by species, remove direction altogether as it doesnt add much and mnakes the graphs look weird
-ggplot(all_con, aes(x=go_term, y=numDEInCat, colour=comparison, fill=comparison)) + 
-  geom_bar(stat="identity", position = "dodge") + coord_flip()
+ggplot(all_con, aes(x=go_term, y=numDEInCat, fill=comparison)) + 
+  labs(x = "GO term", y = "Number DE in Category") +
+  geom_bar(stat="identity", position = "dodge", width = 0.7) + coord_flip() + theme(legend.text=element_text(size=10),
+                                                                      legend.title=element_text(size=15),
+                                                                      axis.title.x=element_text(size=15), 
+                                                                      axis.title.y=element_text(size=15),
+                                                                      axis.text.x= element_text(size=10),
+                                                                      axis.text.y= element_text(size=10)) +
+  scale_fill_brewer(palette = "Paired")
 
-ggplot(all_ple, aes(x=go_term, y=numDEInCat, colour=comparison, fill=comparison)) + 
-  geom_bar(stat="identity", position = "dodge") + coord_flip()
+ggplot(all_ple, aes(x=go_term, y=numDEInCat, fill=comparison)) + 
+  geom_bar(stat="identity", position = "dodge") + coord_flip() +
+  labs(x = "GO term", y = "Number DE in Category") +
+  geom_bar(stat="identity") + coord_flip() + theme(legend.text=element_text(size=10),
+                                                                       legend.title=element_text(size=15),
+                                                                       axis.title.x=element_text(size=15), 
+                                                                       axis.title.y=element_text(size=15),
+                                                                       axis.text.x= element_text(size=10),
+                                                                       axis.text.y= element_text(size=10)) +
+  scale_fill_manual(values=c("chocolate1", 
+                              "aquamarine3", 
+                              "cornflowerblue", 
+                              "firebrick2", 
+                              "gold2",
+                              "darkorchid1",
+                              "darkolivegreen2",
+                              "deeppink1",
+                              "lightgoldenrod1",
+                              "lightsteelblue3",
+                              "maroon",
+                              "pink1",
+                              "springgreen2",
+                              "tan1",
+                              "wheat3"))
 
 
+
+colours_ple<-c("chocolate1", 
+               "aquamarine3", 
+               "cornflowerblue", 
+               "firebrick2", 
+               "gold2",
+               "darkorchid1",
+               "darkolivegreen2",
+               "deeppink1",
+               "lightgoldenrod1",
+               "lightsteelblue3",
+               "maroon",
+               "pink1",
+               "springgreen2",
+               "tan1",
+               "wheat3")
 
 test<-all$go_term[1]
 
