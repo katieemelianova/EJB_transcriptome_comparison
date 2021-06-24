@@ -606,8 +606,8 @@ ggplot(de_df, aes(x=comparison, y=count, colour=species, fill=species)) +
 
 
 
-brks <- seq(-120, 120, 20)
-lbls = paste0(as.character(c(seq(120, 0, -20), seq(20, 120, 20))), "")
+brks <- seq(-200, 200, 20)
+lbls = paste0(as.character(c(seq(200, 0, -20), seq(20, 200, 20))), "")
 de_df_mirror<-de_df %>% 
   mutate(count_mirror=ifelse(de_df$direction == "down", -(de_df$count), de_df$count))
   
@@ -619,7 +619,7 @@ de_df_mirror<-de_df_mirror %>%
     species == "B. plebeja" & direction == 'down' ~ "B. plebeja down"
   ))
 
-
+pdf("barplot_mirrored_enriched_terms.pdf", width = 15, height = 10)
 ggplot(de_df_mirror, aes(x = comparison, y = count_mirror, fill = colour_label)) +   # Fill column
   geom_bar(stat = "identity", width = .6) +   # draw the bars
   scale_y_continuous(breaks = brks,   # Breaks
@@ -633,6 +633,7 @@ ggplot(de_df_mirror, aes(x = comparison, y = count_mirror, fill = colour_label))
         axis.text.x= element_text(size=10),
         axis.text.y= element_text(size=15)) +
   labs(x = "Comparison", y = "Number of enriched GO terms", fill='')
+dev.off()
 
 de_df_mirror %>% filter(comparison == "fem_flower vs leaf")
 
@@ -782,26 +783,29 @@ all_ple$go_term<-factor(all_ple$go_term, levels = unique(all_ple$go_term[order(a
 
 
 # do it by species, remove direction altogether as it doesnt add much and mnakes the graphs look weird
+pdf("con_de_category_barplot.pdf", width = 20, height = 14)
 ggplot(all_con, aes(x=go_term, y=numDEInCat, fill=comparison)) + 
   labs(x = "GO term", y = "Number DE in Category") +
   geom_bar(stat="identity", width = 0.7) + coord_flip() + theme(legend.text=element_text(size=10),
                                                                       legend.title=element_text(size=15),
                                                                       axis.title.x=element_text(size=15), 
                                                                       axis.title.y=element_text(size=15),
-                                                                      axis.text.x= element_text(size=10),
-                                                                      axis.text.y= element_text(size=12)) +
+                                                                      axis.text.x= element_text(size=13),
+                                                                      axis.text.y= element_text(size=15)) +
   scale_fill_brewer(palette = "Paired")
 
+dev.off()
 
+pdf("ple_de_category_barplot.pdf", width = 20, height = 14)
 ggplot(all_ple, aes(x=go_term, y=numDEInCat, fill=comparison)) + 
   geom_bar(stat="identity", position = "dodge") + coord_flip() +
   labs(x = "GO term", y = "Number DE in Category") +
-  geom_bar(stat="identity") + coord_flip() + theme(legend.text=element_text(size=10),
+  geom_bar(stat="identity") + coord_flip() + theme(legend.text=element_text(size=15),
                                                                        legend.title=element_text(size=15),
                                                                        axis.title.x=element_text(size=15), 
                                                                        axis.title.y=element_text(size=15),
-                                                                       axis.text.x= element_text(size=10),
-                                                                       axis.text.y= element_text(size=12)) +
+                                                                       axis.text.x= element_text(size=13),
+                                                                       axis.text.y= element_text(size=15)) +
   scale_fill_manual(values=c("chocolate1", 
                               "aquamarine3", 
                               "cornflowerblue", 
@@ -818,29 +822,7 @@ ggplot(all_ple, aes(x=go_term, y=numDEInCat, fill=comparison)) +
                               "tan1",
                               "wheat3"))
 
-
-
-colours_ple<-c("chocolate1", 
-               "aquamarine3", 
-               "cornflowerblue", 
-               "firebrick2", 
-               "gold2",
-               "darkorchid1",
-               "darkolivegreen2",
-               "deeppink1",
-               "lightgoldenrod1",
-               "lightsteelblue3",
-               "maroon",
-               "pink1",
-               "springgreen2",
-               "tan1",
-               "wheat3")
-
-
-
-
-
-
+dev.off()
 
 
 
