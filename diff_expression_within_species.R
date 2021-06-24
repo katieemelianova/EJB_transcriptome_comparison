@@ -124,6 +124,9 @@ tissue_reference<-list("A" = "female_flower",
                        "L" = "vegetative_bud")
 de_con<-c()
 de_ple<-c()
+
+file.path("DE_genes_to_GOseq", "test")
+
 write_de_genes<-function(species, dge_object, pair1, pair2, annotation){
   tissue1 = tissue_reference[[pair1]]
   tissue2 = tissue_reference[[pair2]]
@@ -133,7 +136,9 @@ write_de_genes<-function(species, dge_object, pair1, pair2, annotation){
   comparison_upregulated<- top_tags %>% filter(FDR < 0.05 & logFC > 2) %>% dplyr::select(transcript_id)
   comparison_downregulated<-top_tags %>% filter(FDR < 0.05 & logFC < -2) %>% dplyr::select(transcript_id)
   up_outfile<-paste(species, tissue1, "v", tissue2, tissue2, "up", sep="_")
+  up_outfile<-file.path("DE_genes_to_GOseq", up_outfile)
   down_outfile<-paste(species, tissue1, "v", tissue2, tissue2, "down", sep="_")
+  down_outfile<-file.path("DE_genes_to_GOseq", down_outfile)
   all_oufile<-paste(species, tissue1, "v", tissue2, tissue2, "all", sep="_")
   write.table(comparison_upregulated, file=up_outfile, quote=FALSE, row.names = FALSE, col.names = FALSE)
   write.table(comparison_downregulated, file=down_outfile, quote=FALSE, row.names = FALSE, col.names = FALSE)
@@ -861,15 +866,18 @@ qgraph(m,edge.labels=TRUE)
 dev.off()
 
 
-
+1/1
+0.7/1
 
 # check how many GO terms are unique to one tissue comparison, and before that print how mnay unqiue GO terms there are
 length(unique(all_con$go_term))
 length(which(sort(summary(all_con$go_term)) == 1))
+table(all_con$comparison)
 
-length(unique(all_con$go_term))
+
+length(unique(all_ple$go_term))
 length(which(sort(summary(all_ple$go_term)) == 1))
-
+table(all_ple$comparison)
 
 tissue_graph<-unique(c(test3$test1, test3$test2))
 
