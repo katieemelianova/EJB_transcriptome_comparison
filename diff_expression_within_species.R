@@ -140,6 +140,7 @@ write_de_genes<-function(species, dge_object, pair1, pair2, annotation){
   down_outfile<-paste(species, tissue1, "v", tissue2, tissue2, "down", sep="_")
   down_outfile<-file.path("DE_genes_to_GOseq", down_outfile)
   all_oufile<-paste(species, tissue1, "v", tissue2, tissue2, "all", sep="_")
+  all_oufile<-file.path("DE_genes_to_GOseq", all_oufile)
   write.table(comparison_upregulated, file=up_outfile, quote=FALSE, row.names = FALSE, col.names = FALSE)
   write.table(comparison_downregulated, file=down_outfile, quote=FALSE, row.names = FALSE, col.names = FALSE)
   write.table(comparison_all, file=all_oufile, quote=FALSE, row.names = FALSE, col.names = FALSE)
@@ -786,7 +787,7 @@ all_ple$go_term<-factor(all_ple$go_term, levels = unique(all_ple$go_term[order(a
 pdf("con_de_category_barplot.pdf", width = 20, height = 14)
 ggplot(all_con, aes(x=go_term, y=numDEInCat, fill=comparison)) + 
   labs(x = "GO term", y = "Number DE in Category") +
-  geom_bar(stat="identity", width = 0.7) + coord_flip() + theme(legend.text=element_text(size=10),
+  geom_bar(stat="identity", width = 0.7) + coord_flip() + theme(legend.text=element_text(size=15),
                                                                       legend.title=element_text(size=15),
                                                                       axis.title.x=element_text(size=15), 
                                                                       axis.title.y=element_text(size=15),
