@@ -12,6 +12,7 @@ library(intergraph)
 library(sna)
 library(network)
 library(qgraph)
+library(dodgr)
 
 
 ####################################
@@ -171,26 +172,75 @@ write_de_genes("con", con_d, "D", "F", con_go)
 write_de_genes("con", con_d, "E", "F", con_go)
   
   
-  write_de_genes("ple", ple_d, "G", "H", ple_go)
-  write_de_genes("ple", ple_d, "G", "I", ple_go)
-  write_de_genes("ple", ple_d, "G", "J", ple_go)
-  write_de_genes("ple", ple_d, "G", "K", ple_go)
-  write_de_genes("ple", ple_d, "G", "L", ple_go)
-  write_de_genes("ple", ple_d, "H", "I", ple_go)
-  write_de_genes("ple", ple_d, "H", "J", ple_go)
-  write_de_genes("ple", ple_d, "H", "K", ple_go)
-  write_de_genes("ple", ple_d, "H", "L", ple_go)
-  write_de_genes("ple", ple_d, "I", "J", ple_go)
-  write_de_genes("ple", ple_d, "I", "K", ple_go)
-  write_de_genes("ple", ple_d, "I", "L", ple_go)
-  write_de_genes("ple", ple_d, "J", "K", ple_go)
-  write_de_genes("ple", ple_d, "J", "L", ple_go)
-  write_de_genes("ple", ple_d, "K", "L", ple_go)
-  
+write_de_genes("ple", ple_d, "G", "H", ple_go)
+write_de_genes("ple", ple_d, "G", "I", ple_go)
+write_de_genes("ple", ple_d, "G", "J", ple_go)
+write_de_genes("ple", ple_d, "G", "K", ple_go)
+write_de_genes("ple", ple_d, "G", "L", ple_go)
+write_de_genes("ple", ple_d, "H", "I", ple_go)
+write_de_genes("ple", ple_d, "H", "J", ple_go)
+write_de_genes("ple", ple_d, "H", "K", ple_go)
+write_de_genes("ple", ple_d, "H", "L", ple_go)
+write_de_genes("ple", ple_d, "I", "J", ple_go)
+write_de_genes("ple", ple_d, "I", "K", ple_go)
+write_de_genes("ple", ple_d, "I", "L", ple_go)
+write_de_genes("ple", ple_d, "J", "K", ple_go)
+write_de_genes("ple", ple_d, "J", "L", ple_go)
+write_de_genes("ple", ple_d, "K", "L", ple_go)
+ 
+
+########################################################
+#            Bar grid of number of DE genes            #
+########################################################
+
+
+tissue_names1<-c("Female Flower", "Leaf", "Male Flower", "Petiole", "Root", "Vegetative Bud")
+tissue_names2<-c("Female Flower", "Leaf", "Male Flower", "petiole", "Root", "Vegetative Bud")
+
+tissue_comps<-data.frame(t(combn(tissue_names1, 2)))
+colnames(tissue_comps)<-c("base", "comp")
+
+
+# got these by doing a wc -l on the files output by write_de_genes
+con_up<-c(611, 671, 415, 832, 689, 1071, 447, 871, 625, 873, 1391, 1307, 950, 788, 761)
+con_down<-c(630, 773, 600, 946, 537, 1295, 583, 1147, 557, 988, 1375, 1118, 876, 433, 649)
+ple_up<-c(716, 658, 675, 1085, 799, 1245, 573, 1216, 761, 1005, 1331, 1215, 902, 556, 913)
+ple_down<-c(739, 590, 530, 1103, 513, 1347, 618, 1418, 818, 971, 1328, 1020, 1051, 392, 754)
+
+comparison_de_dataframe<-data.frame(de_gene_counts=c(con_up, con_down, ple_up, ple_down), direction=rep(c(rep("up", 15), rep("down", 15)), 2), species=c(rep("B. conchifolia", 30), rep("B. plebeja", 30)), comparison=rbind(tissue_comps, tissue_comps, tissue_comps, tissue_comps))
+
+comparison_de_dataframe<-comparison_de_dataframe %>%
+  mutate(plot_col = case_when(
+    direction == "up" & species == "B. conchifolia" ~ "B. conchifolia up",
+    direction == "down" & species == "B. conchifolia" ~ "B. conchifolia down",
+    direction == "up" & species == "B. plebeja" ~ "B. plebeja up",
+    direction == "down" & species == "B. plebeja" ~ "B. plebeja down",
+  ))
+
+#comparison_de_dataframe$de_gene_counts<-ifelse(comparison_de_dataframe$direction == 'up', comparison_de_dataframe$de_gene_counts, -comparison_de_dataframe$de_gene_counts)
+
+comparison_de_dataframe$plot_col<-factor(comparison_de_dataframe$plot_col, levels=c("B. conchifolia up", "B. conchifolia down", "B. plebeja up", "B. plebeja down"))
 
 
 
-
+pdf("figure2_barplot_grid_de_genes.pdf", width = 15, height = 10)
+ggplot(comparison_de_dataframe, aes(x=direction, y=de_gene_counts, fill=plot_col)) + 
+  geom_bar(stat = "identity", position=position_dodge()) + facet_grid(rows = vars(comparison.base), cols = vars(comparison.comp)) +
+  scale_fill_manual(values=c("Red", "dodgerblue2", "orange", "lightskyblue")) +
+  ylab("Number of DE genes") +
+  theme(legend.title=element_blank(),
+        legend.text = element_text(size=18),
+        axis.text.x=element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.title.x=element_blank(), 
+        axis.text.y=element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.title.y=element_blank(), 
+        strip.text.x = element_text(size = 18),
+        strip.text.y = element_text(size = 18)) +
+  geom_text(aes(label=abs(de_gene_counts)), position=position_dodge(width=0.9), vjust=-0.5, fontface = "bold") +
+  ylim(0,2000)
+dev.off()
 
 
 ########################################################
@@ -219,7 +269,7 @@ length(unique(c(a,b)))
 
 myCol<-c("mistyrose1", "lightskyblue1")
 v<-venn.diagram(list(cat_a=a, cat_b=b), 
-                filename = "test_venn.png", 
+                filename = "figure3_venn_de_genes.png", 
                 category.names = c("B. conchifolia" , "B. plebeja"),
                 lwd = 1,
                 lty = 'blank',
@@ -305,14 +355,14 @@ circos_cols<-c("hotpink",
                "tan4",
                "skyblue1")
 
-pdf('con_circos_plot.pdf')
-par(cex = 2, mar = c(0, 0, 0, 0))
-chordDiagram(con_chord_df, grid.col = circos_cols)
-dev.off()
-circos.clear()
-pdf('ple_circos_plot.pdf')
-chordDiagram(ple_chord_df, grid.col = circos_cols)
-dev.off()
+#pdf('figure2A_con_circos_plot.pdf')
+#par(cex = 2, mar = c(0, 0, 0, 0))
+#chordDiagram(con_chord_df, grid.col = circos_cols)
+#dev.off()
+#circos.clear()
+#pdf('figure2B_ple_circos_plot.pdf')
+#chordDiagram(ple_chord_df, grid.col = circos_cols)
+#dev.off()
 
 
 
@@ -550,21 +600,21 @@ ple_enriched_down_count<-sapply(ple_down_enriched_list, function(x) x %>% filter
 
 
 
-comparisons<-c("fem_flower vs leaf",
-"female flower vs male flower",
-"female flower vs petiole",
-"female flower vs root",
-"female flower vs veg bud",
-"leaf vs male flower",
-"leaf vs petiole",
-"leaf vs root",
-"leaf vs veg bud",
-"male flower vs petiole",
-"male flower vs root",
-"male flower vs veg bud",
-"petiole vs root",
-"petiole vs veg bud",
-"root vs veg bud")
+comparisons<-c("Female Flower vs Leaf",
+"Female Flower vs Male Flower",
+"Female Flower vs Petiole",
+"Female Flower vs Root",
+"Female Flower vs Vegetative Bud",
+"Leaf vs Male Flower",
+"Leaf vs Petiole",
+"Leaf vs Root",
+"Leaf vs Vegetative Bud",
+"Male Flower vs Petiole",
+"Male Flower vs Root",
+"Male Flower vs Vegetative Bud",
+"Petiole vs Root",
+"Petiole vs Vegetative Bud",
+"Root vs Vegetative Bud")
 
 
 
@@ -592,6 +642,7 @@ ple_down_df<-data.frame(comparison=comparisons,
 
 de_df<-rbind(con_up_df, con_down_df, ple_up_df, ple_down_df)
 
+
 ggplot(de_df, aes(x=comparison, y=count, colour=species, fill=species)) + 
   geom_bar(stat="identity", position = "dodge", width=0.5) + facet_grid(rows = vars(direction)) + 
   coord_flip() +
@@ -611,6 +662,9 @@ brks <- seq(-200, 200, 20)
 lbls = paste0(as.character(c(seq(200, 0, -20), seq(20, 200, 20))), "")
 de_df_mirror<-de_df %>% 
   mutate(count_mirror=ifelse(de_df$direction == "down", -(de_df$count), de_df$count))
+
+comparison=rbind(tissue_comps, tissue_comps, tissue_comps, tissue_comps)
+de_df_mirror<-cbind(de_df_mirror, comparison)
   
 de_df_mirror<-de_df_mirror %>%
   mutate(colour_label = case_when(
@@ -620,13 +674,28 @@ de_df_mirror<-de_df_mirror %>%
     species == "B. plebeja" & direction == 'down' ~ "B. plebeja down"
   ))
 
-pdf("barplot_mirrored_enriched_terms.pdf", width = 15, height = 10)
+de_df_mirror$colour_label<-factor(de_df_mirror$colour_label, levels=c("B. conchifolia up", "B. conchifolia down", "B. plebeja up", "B. plebeja down"))
+de_df_mirror$comparison<-factor()
+
+de_df_mirror$comparison<-factor(de_df_mirror$comparison, levels=unique(de_df_mirror$comparison[order(de_df_mirror$count)]))
+
+test<-de_df_mirror %>% group_by(comparison) %>% 
+  summarise(sums=sum(count)) %>% 
+  arrange(sums) %>% 
+  select(comparison) %>% 
+  pull() %>% as.vector()
+
+
+de_df_mirror$comparison<-factor(de_df_mirror$comparison, levels=test)
+
+
+pdf("figure4_barplot_mirrored_enriched_terms.pdf", width = 15, height = 10)
 ggplot(de_df_mirror, aes(x = comparison, y = count_mirror, fill = colour_label)) +   # Fill column
   geom_bar(stat = "identity", width = .6) +   # draw the bars
   scale_y_continuous(breaks = brks,   # Breaks
                      labels = lbls) + 
   coord_flip() +
-  scale_fill_manual(values=c("firebrick2", "lightpink2", "skyblue2", "dodgerblue2")) + 
+  scale_fill_manual(values=c("Red", "dodgerblue2", "orange", "lightskyblue")) + 
   theme(legend.text=element_text(size=15),
         legend.title=element_text(size=15),
         axis.title.x=element_text(size=15), 
@@ -729,21 +798,24 @@ in_ple_and_con_down<-mapply(function(one, two) intersect(one, two), con_down_enr
 in_ple_and_con_up<-mapply(function(one, two) intersect(one, two), con_up_enriched_list_go, ple_up_enriched_list_go)
 
 
-comparison_names<-list("Female flower vs Leaf",
-                    "Female flower vs Male flower",
-                    "Female flower vs Petiole",
-                    "Female flower vs Root",
-                    "Female flower vs Vegetative bud",
-                    "Leaf vs Male flower",
+
+
+
+comparison_names<-list("Female Flower vs Leaf",
+                    "Female Flower vs Male Flower",
+                    "Female Flower vs Petiole",
+                    "Female Flower vs Root",
+                    "Female Flower vs Vegetative Bud",
+                    "Leaf vs Male Flower",
                     "Leaf vs Petiole",
                     "Leaf vs Root",
-                    "Leaf vs Vegetative bud",
-                    "Male flower vs Petiole",
-                    "Male flower vs Root",
-                    "Male flower vs Vegetative bud",
+                    "Leaf vs Vegetative Bud",
+                    "Male Flower vs Petiole",
+                    "Male Flower vs Root",
+                    "Male Flower vs Vegetative Bud",
                     "Petiole vs Root",
-                    "Petiole vs Vegetative bud",
-                    "Root vs Vegetative bud")
+                    "Petiole vs Vegetative Bud",
+                    "Root vs Vegetative Bud")
 
 
 # conch specific Go terms enriched in con but not in ple per tissue comparison (upregulaed reference tissue)
@@ -783,10 +855,171 @@ all_con$go_term<-factor(all_con$go_term, levels = unique(all_con$go_term[order(a
 all_ple$go_term<-factor(all_ple$go_term, levels = unique(all_ple$go_term[order(all_ple$numDEInCat)]))
 
 
+all_ple %>% filter(category == "GO:0009637")
+all_ple %>% filter(category == "GO:0009644")
+
+sapply(in_ple_notin_con_down, function(x) "GO:0009637" %in% x)
+
+
+# response to blue light - female flower vs root
+# response to high light intensity - leaf and petiole, leaf and male flower
+# cellular response to light stimulus - leaf vs veg bud
+
+
+library("Biostrings")
+library(GGally)
+
+ggparcoord(data = iris,
+           columns = 1:4,
+           groupColumn = "Species")
+
+?ggparcoord
+
+
+
+female_flower_samples<-ple_d$samples %>% filter(group == "G") %>% rownames()
+leaf_samples<-ple_d$samples %>% filter(group == "H") %>% rownames()
+male_flower_samples<-ple_d$samples %>% filter(group == "I") %>% rownames()
+petiole_samples<-ple_d$samples %>% filter(group == "J") %>% rownames()
+root_samples<-ple_d$samples %>% filter(group == "K") %>% rownames()
+veg_bud_samples<-ple_d$samples %>% filter(group == "L") %>% rownames()
+
+
+female_flower_avecpm<-rowMeans(ple_d$counts[,female_flower_samples])
+leaf_avecpm<-rowMeans(ple_d$counts[,leaf_samples])
+male_flower_avecpm<-rowMeans(ple_d$counts[,male_flower_samples])
+petiole_avecpm<-rowMeans(ple_d$counts[,petiole_samples])
+root_avecpm<-rowMeans(ple_d$counts[,root_samples])
+veg_bud_avecpm<-rowMeans(ple_d$counts[,veg_bud_samples])
+
+
+ple_d_ave_cpm<-data.frame(female_flower=female_flower_avecpm,
+                          leaf=leaf_avecpm,
+                          male_flower=male_flower_avecpm,
+                          petiole=petiole_avecpm,
+                          root=root_avecpm,
+                          veg_bud=veg_bud_avecpm)
+
+
+c_fasta = readDNAStringSet("/Users/katie/Desktop/Bg/begonia_duplicate_expression/con_Trinity.longest.fasta")
+p_fasta = readDNAStringSet("/Users/katie/Desktop/Bg/begonia_duplicate_expression/ple_Trinity.longest.fasta")
+
+c_fasta_names<-sapply(names(c_fasta), function(x) str_split(x, " ")[[1]][1])
+c_fasta_names<-unname(c_fasta_names)
+names(c_fasta)<-c_fasta_names
+
+p_fasta_names<-sapply(names(p_fasta), function(x) str_split(x, " ")[[1]][1])
+p_fasta_names<-unname(p_fasta_names)
+names(p_fasta)<-p_fasta_names
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+get_genes_in_GO<-function(go_term, tissue_comparison){
+  to_return<-tissue_comparison %>% 
+    filter(category == !!go_term) %>% 
+    select("gene_ids") %>% 
+    pull() %>% 
+    str_split(", ") %>% 
+    unlist()
+  to_return<-sapply(to_return, function(x) str_split(x, "_i")[[1]][1])
+  to_return<-unname(to_return)
+  return(to_return)
+}
+
+
+ple_annotation<-read_tsv("/Users/katie/Desktop/Bg/begonia_duplicate_expression/supplementary_file4_ple_trinotate_annotation_report.xls")
+colnames(ple_annotation)[1]<-"gene_id"
+
+
+#response to blue light GO:0009637 - male flower vs root
+response_to_blue_light<-get_genes_in_GO("GO:0009637", ple_male_flower_v_root_go_enriched) 
+ple_annotation %>% filter(gene_id %in% response_to_blue_light) %>% select("sprot_Top_BLASTX_hit") %>% data.frame()
+
+
+# cellular response to light stimulus - leaf vs veg bud
+cellular_response_to_light_stim<-get_genes_in_GO("GO:0071482", ple_leaf_v_vegetative_bud_go_enriched)
+ple_annotation %>% filter(gene_id %in% cellular_response_to_light_stim) %>% select("sprot_Top_BLASTX_hit") %>% data.frame()
+
+
+
+#response to high light intensity GO:0009644 - leaf vs petiole, leaf vs male flowe
+response_to_high_light_intensity_leaf_petiole<-get_genes_in_GO("GO:0009644", ple_leaf_v_petiole_go_enriched) 
+response_to_high_light_intensity_leaf_mflower<-get_genes_in_GO("GO:0009644", ple_leaf_v_male_flower_go_enriched) 
+response_to_high_light_intensity<-c(response_to_high_light_intensity_leaf_petiole, response_to_high_light_intensity_leaf_mflower)
+ple_annotation %>% filter(gene_id %in% response_to_high_light_intensity) %>% select("sprot_Top_BLASTX_hit") %>% data.frame()
+
+
+#negative regulation of anion channel activity by blue light - male flower vs root, leaf vs root, female flower vs root
+negative_reg_by_blue_light_mflower_root<-get_genes_in_GO("GO:0010362", ple_male_flower_v_root_go_enriched) 
+negative_reg_by_blue_light_leaf_root<-get_genes_in_GO("GO:0010362", ple_leaf_v_root_go_enriched) 
+negative_reg_by_blue_light_fflower_root<-get_genes_in_GO("GO:0010362", ple_female_flower_v_root_go_enriched) 
+negative_reg_by_blue_light<-c(negative_reg_by_blue_light_mflower_root, negative_reg_by_blue_light_leaf_root, negative_reg_by_blue_light_fflower_root)
+ple_annotation %>% filter(gene_id %in% negative_reg_by_blue_light) %>% select("sprot_Top_BLASTX_hit") %>% data.frame()
+
+
+
+###########################################
+
+
+con_comparison_numbers_total<-tissue_comps
+colnames(con_comparison_numbers_total) <- c("test1", "test2")
+test<-right_join(con_comparison_numbers, con_comparison_numbers_total)
+colnames(test)<-c("from", "to", "d")
+
+m <- dodgr_dists(test)
+m <- as.matrix(m)
+qgraph(m,edge.labels=TRUE)
+
+
+nrow(con_comparison_numbers)
+tissue_comps
+
+comparisons_total<-tissue_comps
+colnames(comparisons_total) <- c("test1", "test2")
+
+pdf("figure5A_con_comparison_network.pdf")
+con_comparison_numbers<-all_con[,c("numDEInCat", "comparison")]
+con_comparison_numbers<-aggregate(numDEInCat ~ comparison, con_comparison_numbers, sum)
+con_comparison_numbers<-tidyr::separate(con_comparison_numbers, comparison, into = c("test1", "test2"), sep = " vs ",)
+con_comparison_numbers<-right_join(con_comparison_numbers, comparisons_total)
+colnames(con_comparison_numbers)<-c("from", "to", "d")
+m <- dodgr_dists(con_comparison_numbers)
+m <- as.matrix(m)
+qgraph(m,edge.labels=TRUE)
+dev.off()
+
+
+
+pdf("figure5B_ple_comparison_network.pdf")
+ple_comparison_numbers<-all_ple[,c("numDEInCat", "comparison")]
+ple_comparison_numbers<-aggregate(numDEInCat ~ comparison, ple_comparison_numbers, sum)
+ple_comparison_numbers<-tidyr::separate(ple_comparison_numbers, comparison, into = c("test1", "test2"), sep = " vs ",)
+ple_comparison_numbers<-right_join(ple_comparison_numbers, comparisons_total)
+colnames(ple_comparison_numbers)<-c("from", "to", "d")
+m <- dodgr_dists(ple_comparison_numbers)
+m <- as.matrix(m)
+qgraph(m,edge.labels=TRUE)
+dev.off()
+ ############################
+
+
+
+
 # do it by species, remove direction altogether as it doesnt add much and mnakes the graphs look weird
-pdf("con_de_category_barplot.pdf", width = 20, height = 14)
-ggplot(all_con, aes(x=go_term, y=numDEInCat, fill=comparison)) + 
-  labs(x = "GO term", y = "Number DE in Category") +
+pdf("figure6_con_de_category_barplot.pdf", width = 20, height = 14)
+ggplot(all_con, aes(x=go_term, y=log(numDEInCat), fill=comparison)) + 
+  labs(x = "GO term", y = "Log(Number DE in Category)") +
   geom_bar(stat="identity", width = 0.7) + coord_flip() + theme(legend.text=element_text(size=15),
                                                                       legend.title=element_text(size=15),
                                                                       axis.title.x=element_text(size=15), 
@@ -797,10 +1030,10 @@ ggplot(all_con, aes(x=go_term, y=numDEInCat, fill=comparison)) +
 
 dev.off()
 
-pdf("ple_de_category_barplot.pdf", width = 20, height = 14)
-ggplot(all_ple, aes(x=go_term, y=numDEInCat, fill=comparison)) + 
+pdf("figure7_ple_de_category_barplot.pdf", width = 20, height = 14)
+ggplot(all_ple, aes(x=go_term, y=log(numDEInCat), fill=comparison)) + 
   geom_bar(stat="identity", position = "dodge") + coord_flip() +
-  labs(x = "GO term", y = "Number DE in Category") +
+  labs(x = "GO term", y = "Log(Number DE in Category)") +
   geom_bar(stat="identity") + coord_flip() + theme(legend.text=element_text(size=15),
                                                                        legend.title=element_text(size=15),
                                                                        axis.title.x=element_text(size=15), 
@@ -828,281 +1061,4 @@ dev.off()
 
 
 
-pdf("con_comparison_network.pdf")
-con_comparison_numbers<-all_con[,c("numDEInCat", "comparison")]
-con_comparison_numbers<-aggregate(numDEInCat ~ comparison, con_comparison_numbers, sum)
-con_comparison_numbers<-tidyr::separate(con_comparison_numbers, comparison, into = c("test1", "test2"), sep = " vs ",)
-colnames(con_comparison_numbers)<-c("from", "to", "d")
-m <- dodgr_dists(con_comparison_numbers)
-m <- as.matrix(m)
-qgraph(m,edge.labels=TRUE)
-dev.off()
 
-pdf("ple_comparison_network.pdf")
-ple_comparison_numbers<-all_ple[,c("numDEInCat", "comparison")]
-ple_comparison_numbers<-aggregate(numDEInCat ~ comparison, ple_comparison_numbers, sum)
-ple_comparison_numbers<-tidyr::separate(ple_comparison_numbers, comparison, into = c("test1", "test2"), sep = " vs ",)
-colnames(ple_comparison_numbers)<-c("from", "to", "d")
-m <- dodgr_dists(ple_comparison_numbers)
-m <- as.matrix(m)
-qgraph(m,edge.labels=TRUE)
-dev.off()
-
-
-1/1
-0.7/1
-
-# check how many GO terms are unique to one tissue comparison, and before that print how mnay unqiue GO terms there are
-length(unique(all_con$go_term))
-length(which(sort(summary(all_con$go_term)) == 1))
-table(all_con$comparison)
-
-
-length(unique(all_ple$go_term))
-length(which(sort(summary(all_ple$go_term)) == 1))
-table(all_ple$comparison)
-
-tissue_graph<-unique(c(test3$test1, test3$test2))
-
-
-g4 <- graph(x)
-ggnet2(g4)            
-             
-install.packages("dodgr")
-library(dodgr)
-
-aggregate(numDEInCat ~ row, test2, sum)
-
-
-test$comparison
-
-test<-all$go_term[1]
-
-test[1]
-
-substring(all$go_term, 4)
-
-
-fflower_vs<-c(0, 611, 671, 415, 832, 689)
-leaf_vs<-c(716, 0, 1071, 447, 871, 625)
-mflower_vs<-c(658, 1245, 0, 873, 1391, 1307)
-petiole_vs<-c(675, 573, 1005, 0, 950, 788)
-root_vs<-c(1085, 1216, 1331, 902, 0, 761)
-vegbud_vs<-c(799, 761, 1215, 556, 913, 0)
-
-
-de_upreg<-data.frame(fflower_vs, leaf_vs, mflower_vs, petiole_vs, root_vs, vegbud_vs)
-
-
-PLE_TRINITY_DN10424_c0_g2_i3<-c(146.510082987706,	2508.90811274799,	26.7097241343816,	591.039566176487,	8.86216943978959,	323.823009957749)
-PLE_TRINITY_DN10702_c0_g1_i6<-c(410.783033582042,	2476.58077169722,	59.7230672964667,	530.094683714974,	7.41027437540702,	275.11157132182)
-PLE_TRINITY_DN1234_c0_g1_i1<-	c(29.5028385950133,	150.642755197154,	10.675726223133,	40.7030102291845,	0.617789897782811,	23.9577421204015)
-PLE_TRINITY_DN1394_c0_g1_i1<-	c(575.282545625639,	5267.25356802233,	118.018142652291,	1074.89751304855,	6.48322070175823,	571.211324511977)
-PLE_TRINITY_DN1453_c0_g1_i1<-	c(21.6959964621876,	56.3566708106038,	3.20822054580883,	16.0957822120655,	3.24223505545978,	28.5339195986808)
-PLE_TRINITY_DN2018_c0_g1_i2<-	c(38.7911994845226,	97.3584127178022,	4.89241384036555,	31.7182753919664,	4.53468162451518,	28.192437904522)
-PLE_TRINITY_DN4425_c0_g1_i1<-	c(34.0463717444646,	68.6382835205116,	17.8969548663024,	18.1565841307301,	14.7051993076339,	18.6446103929537)
-PLE_TRINITY_DN6516_c2_g2_i7<-	c(2013.00277213284,	9186.21879254671,	289.135916297716,	3302.34114531942,	12.1226282031063,	1870.76113260932)
-PLE_TRINITY_DN9177_c0_g1_i4<-	c(19.7930155850893,	68.4810972773486,	14.2084412716347,	101.149191426205,	37.2026445832983,	89.8678653700418)
-PLE_TRINITY_DN9399_c0_g1_i1<-	c(66.5089090693356,	188.760072835038,	34.065036427242,	65.7403447856097,	13.6504968936632,	43.3695622195009)
-PLE_TRINITY_DN9399_c0_g3_i1<-	c(16.7637807607527,	97.6832412484189,	3.67351638476552,	14.6028223131999,	0.943263641264809,	13.0337048038031)
-PLE_TRINITY_DN9990_c1_g1_i1<-	c(95.0061154105097,	255.6537302859,	12.8952088777428,	58.1396374637146,	0.850974253167925,	37.1973712371114)
-
-
-
-
-
-PLE_TRINITY_DN10702_c0_g1_i6 <-	c(410.783033582042,	2476.58077169722,	59.7230672964667,	530.094683714974,	7.41027437540702,	275.11157132182)
-PLE_TRINITY_DN1234_c0_g1_i1	<- c(29.5028385950133,	150.642755197154,	10.675726223133,	40.7030102291845,	0.617789897782811,	23.9577421204015)
-PLE_TRINITY_DN1394_c0_g1_i1	<- c(575.282545625639,	5267.25356802233,	118.018142652291,	1074.89751304855,	6.48322070175823,	571.211324511977)
-PLE_TRINITY_DN2018_c0_g1_i2	<- c(38.7911994845226,	97.3584127178022,	4.89241384036555,	31.7182753919664,	4.53468162451518,	28.192437904522)
-PLE_TRINITY_DN4425_c0_g1_i1	<- c(34.0463717444646,	68.6382835205116,	17.8969548663024,	18.1565841307301,	14.7051993076339,	18.6446103929537)
-PLE_TRINITY_DN6516_c2_g2_i7	<- c(2013.00277213284,	9186.21879254671,	289.135916297716,	3302.34114531942,	12.1226282031063,	1870.76113260932)
-PLE_TRINITY_DN9177_c0_g1_i4	<- c(19.7930155850893,	68.4810972773486,	14.2084412716347,	101.149191426205,	37.2026445832983,	89.8678653700418)
-PLE_TRINITY_DN9399_c0_g1_i1	<- c(66.5089090693356,	188.760072835038,	34.065036427242,	65.7403447856097,	13.6504968936632,	43.3695622195009)
-
-CON_TRINITY_DN6879_c1_g3_i3	<- c(277.112050969756,	1126.41063031514,	41.7909253733399,	116.906805925568,	95.881496783914,	314.310403657318)
-CON_TRINITY_DN1904_c0_g1_i1	<- c(49.0200288060174,	294.296919234734,	16.30566133939,	66.104384345018,	3.60434303861895,	12.8854498439226)
-CON_TRINITY_DN6223_c0_g3_i3	<- c(508.403565573151,	3496.3256154533,	79.9175466309462,	491.33310325017,	100.870622457619,	481.592539485971)
-CON_TRINITY_DN1734_c0_g1_i3	<- c(21.2640097686692,	49.9893625047817,	6.07949906495243,	21.6591378449562,	9.9789960937048,	19.5930395322612)
-CON_TRINITY_DN862_c0_g1_i2	<- c(24.0562779199061,	37.0783275479418,	18.640343689413,	29.9518036363914,	19.0132345892191,	23.0084679056202)
-CON_TRINITY_DN6158_c0_g2_i4	<- c(1050.1812024465,	5228.28860093757,	237.317257124915,	621.429047451046,	420.28481213993,	1445.78170043933)
-CON_TRINITY_DN7064_c3_g3_i1	<- c(12.7578153940939,	8.32960667291691,	0.241362928891985,	7.58597185372785,	14.1326710658355,	12.8228679780768)
-CON_TRINITY_DN7269_c1_g2_i2	<- c(42.7687704145285,	93.04670463628,	32.9993641146538,	83.0000073393078,	19.8664892138165,	40.8692874935894)
-
-
-
-CON_TRINITY_DN6879_c1_g3_i3,
-CON_TRINITY_DN1904_c0_g1_i1,
-CON_TRINITY_DN6223_c0_g3_i3,
-CON_TRINITY_DN1734_c0_g1_i3,
-CON_TRINITY_DN862_c0_g1_i2,
-CON_TRINITY_DN6158_c0_g2_i4,
-CON_TRINITY_DN7064_c3_g3_i1,
-CON_TRINITY_DN7269_c1_g2_i2
-
-
-
-test_light_con<-data.frame(CON_TRINITY_DN6879_c1_g3_i3,
-                  CON_TRINITY_DN1904_c0_g1_i1,
-                  CON_TRINITY_DN6223_c0_g3_i3,
-                  CON_TRINITY_DN1734_c0_g1_i3,
-                  CON_TRINITY_DN862_c0_g1_i2,
-                  CON_TRINITY_DN6158_c0_g2_i4,
-                  CON_TRINITY_DN7064_c3_g3_i1,
-                  CON_TRINITY_DN7269_c1_g2_i2)
-
-
-test_light_ple<-data.frame(PLE_TRINITY_DN10702_c0_g1_i6,
-                  PLE_TRINITY_DN1234_c0_g1_i1,
-                  PLE_TRINITY_DN1394_c0_g1_i1,
-                  PLE_TRINITY_DN2018_c0_g1_i2,
-                  PLE_TRINITY_DN4425_c0_g1_i1,
-                  PLE_TRINITY_DN6516_c2_g2_i7,
-                  PLE_TRINITY_DN9177_c0_g1_i4,
-                  PLE_TRINITY_DN9399_c0_g1_i1)
-
-
-
-
-
-
-test_light<-data.frame(PLE_TRINITY_DN10702_c0_g1_i6,
-                       CON_TRINITY_DN6879_c1_g3_i3,
-                       PLE_TRINITY_DN1234_c0_g1_i1,
-                       CON_TRINITY_DN1904_c0_g1_i1,
-                       PLE_TRINITY_DN1394_c0_g1_i1,
-                       CON_TRINITY_DN6223_c0_g3_i3,
-                       PLE_TRINITY_DN2018_c0_g1_i2,
-                       CON_TRINITY_DN1734_c0_g1_i3,
-                       PLE_TRINITY_DN4425_c0_g1_i1,
-                       CON_TRINITY_DN862_c0_g1_i2,
-                       PLE_TRINITY_DN6516_c2_g2_i7,
-                       CON_TRINITY_DN6158_c0_g2_i4,
-                       PLE_TRINITY_DN9177_c0_g1_i4,
-                       CON_TRINITY_DN7064_c3_g3_i1,
-                       PLE_TRINITY_DN9399_c0_g1_i1,
-                       CON_TRINITY_DN7269_c1_g2_i2)
-
-test_light<-as.matrix(test_light)
-
-test_light_con<-as.matrix(test_light_con)
-test_light_ple<-as.matrix(test_light_ple)
-
-pheatmap(log2(test_light), cluster_rows = TRUE, cluster_cols = TRUE)
-
-pheatmap(log2(test_light_con), cluster_rows = TRUE, cluster_cols = TRUE)
-pheatmap(log2(test_light_ple), cluster_rows = TRUE, cluster_cols = TRUE)
-
-
-
-
-#########
-
-CON_TRINITY_DN6879_c1_g3_i3<-c(277.112050969756, 1126.41063031514, 41.7909253733399, 116.906805925568, 95.881496783914, 314.310403657318)
-CON_TRINITY_DN1904_c0_g1_i1<-c(49.0200288060174, 294.296919234734, 16.30566133939, 66.104384345018, 3.60434303861895, 12.8854498439226)
-CON_TRINITY_DN6223_c0_g3_i3<-c(508.403565573151, 3496.3256154533, 79.9175466309462, 491.33310325017, 100.870622457619, 481.592539485971)
-CON_TRINITY_DN862_c0_g1_i2 <-c(24.0562779199061, 37.0783275479418, 18.640343689413, 29.9518036363914, 19.0132345892191, 23.0084679056202)
-
-PLE_TRINITY_DN10702_c0_g1_i6<-c(410.783033582042, 2476.58077169722, 59.7230672964667, 530.094683714974, 7.41027437540702, 275.11157132182)
-PLE_TRINITY_DN1234_c0_g1_i1 <-c(29.5028385950133, 150.642755197154, 10.675726223133, 40.7030102291845, 0.617789897782811, 23.9577421204015)
-PLE_TRINITY_DN1394_c0_g1_i1 <-c(575.282545625639, 5267.25356802233, 118.018142652291, 1074.89751304855, 6.48322070175823, 571.211324511977)
-PLE_TRINITY_DN4425_c0_g1_i1 <-c(34.0463717444646, 68.6382835205116, 17.8969548663024, 18.1565841307301, 14.7051993076339, 18.6446103929537)
-
-
-
-
-
-test_light2<-data.frame(CON_TRINITY_DN6879_c1_g3_i3,
-                       CON_TRINITY_DN1904_c0_g1_i1,
-                       CON_TRINITY_DN6223_c0_g3_i3,
-                       CON_TRINITY_DN862_c0_g1_i2,
-                       PLE_TRINITY_DN10702_c0_g1_i6,
-                       PLE_TRINITY_DN1234_c0_g1_i1,
-                       PLE_TRINITY_DN1394_c0_g1_i1,
-                       PLE_TRINITY_DN4425_c0_g1_i1)
-test_light2<-as.matrix(test_light2)
-
-pheatmap(log2(test_light2), cluster_rows = TRUE, cluster_cols = TRUE)
-
-########### root vs veg but response to chitin
-
-
-
-CON_TRINITY_DN8704_c0_g1_i1<- c(0.375058801011086, 6.56683275048367, 1.5898260214002, 2.87972321927564, 0.663110220871657, 0.84456267290407)
-CON_TRINITY_DN6566_c2_g2_i2<- c(5.70603277799682, 2.82956624570527, 9.29086592280381, 2.55425505328203, 8.39125201897979, 6.60118208667222)
-CON_TRINITY_DN6428_c3_g6_i1<- c(0, 0, 0.0630941689296661, 0, 5.7783576991365, 4.19080630211211)
-CON_TRINITY_DN6428_c3_g8_i1<- c(0, 1.50483775555447, 0.0521695365869513, 0.319569796927699, 2.95927410832759, 0.466872369331984)
-CON_TRINITY_DN7052_c1_g1_i4<- c(53.4979541159031, 6.16272134893453, 326.504344758021, 10.8425086240611, 12.8226485591497, 6.05636450549996)
-CON_TRINITY_DN8003_c0_g1_i1<- c(0, 0, 0, 0, 10.7328453352164, 0.136421110424267)
-CON_TRINITY_DN4507_c0_g2_i1<- c(1.71788310405484, 0, 0.0929429215691094, 0.136320048302985, 6.51700808284003, 3.30771015869177)
-CON_TRINITY_DN4507_c0_g1_i1<- c(4.76579625790262, 2.52254369989016, 3.65999587394966, 2.99750482475297, 19.2552739264758, 15.4999592917205)
-CON_TRINITY_DN7520_c0_g6_i1<- c(24.4922996704888, 0.475525086302726, 15.8069397150784, 0.89402359732081, 0.328310524223138, 0.599666411817255)
-CON_TRINITY_DN5026_c0_g2_i1<- c(1.85911571145037, 0.1910226741438, 0.827872527348919, 0.638738064490399, 4.80720122355383, 4.68212679613554)
-CON_TRINITY_DN3461_c0_g1_i1<- c(0, 0, 0, 0.119078895482203, 12.1466848202506, 0)
-CON_TRINITY_DN3461_c0_g2_i1<- c(0, 0, 0, 0, 30.6105400410935, 0.0826977162628845)
-CON_TRINITY_DN6729_c0_g9_i1<- c(33.1579283135185, 107.204603595753, 21.610272911086, 62.5779131973003, 39.6314447570796, 113.328978336146)
-CON_TRINITY_DN6993_c4_g1_i1<- c(3.25250919441379, 0.77959347478842, 11.0159476123005, 1.05641788968733, 14.7882419009452, 3.22892174213397)
-CON_TRINITY_DN6882_c4_g4_i5<- c(5.35560812504056, 2.27491677339933, 3.29328870567352, 3.92635868536667, 11.0232769075161, 12.7642218157982)
-CON_TRINITY_DN5957_c1_g2_i1<- c(3.67405917859885, 4.10408133204951, 9.30093618045327, 0.829197515061433, 10.0054073080056, 3.79750451190861)
-CON_TRINITY_DN5307_c1_g2_i1<- c(0, 0.389688368792383, 1.03952615506951, 0.484401178443507, 3.89122119475069, 8.19586812227167)
-PLE_TRINITY_DN1325_c0_g1_i3 <- c(0.659323384622814, 0.975400044696627, 2.88298269327096, 2.21088792589068, 2.08527663374336, 0.3035289682697)
-PLE_TRINITY_DN1545_c0_g1_i1 <- c(1.49236746342907, 2.83376413696846, 4.90836152914577, 3.21371794386438, 0.568093675426948, 5.95890766378839)
-PLE_TRINITY_DN1776_c0_g2_i1 <- c(0, 0, 0, 0, 13.7630436526205, 0)
-PLE_TRINITY_DN1776_c0_g3_i2 <- c(0.299786783054826, 0.259186674888013, 0.616049168801522, 0.406397421908351, 7.09116234114136, 0)
-PLE_TRINITY_DN4742_c0_g4_i1 <- c(6.87420737763873, 1.19862120433423, 18.5641080977738, 4.87168383371093, 29.9779705988592, 3.43091966477076)
-PLE_TRINITY_DN5247_c0_g1_i2 <- c(0.085223083299511, 0.436437409833707, 0, 0.562132793875544, 22.430430041409, 0.360371695969352)
-PLE_TRINITY_DN5341_c0_g3_i2 <- c(0.712456821630132, 0, 0.118077678276962, 0.381829525578476, 9.60224878919893, 0.462122895091024)
-PLE_TRINITY_DN5341_c0_g4_i1 <- c(2.35804907281021, 0.369516382874314, 3.90270133662589, 4.70608771775706, 14.9247294934707, 3.0716684997354)
-PLE_TRINITY_DN5411_c3_g2_i2 <- c(6.6152814132776, 0.970730644891229, 59.3716546329681, 0.876233429871122, 0, 1.81823589864504)
-PLE_TRINITY_DN6010_c0_g1_i4 <- c(4.44486710756923, 0.866118357215631, 2.34420927487125, 0.820796137324788, 11.4850381231546, 0.646378297289276)
-PLE_TRINITY_DN6573_c0_g2_i1 <- c(0.904464031287028, 0.968749760436948, 0.637527914057625, 1.19880490747864, 15.0950351844776, 1.55040491206715)
-PLE_TRINITY_DN6573_c0_g3_i2 <- c(0, 0, 0, 0, 49.5314506255628, 0.378813608752038)
-PLE_TRINITY_DN7191_c2_g1_i1 <- c(47.2312084958709, 73.1355968752219, 29.6828267493179, 75.2331288842908, 17.0049897184004, 86.5433552625001)
-PLE_TRINITY_DN7629_c1_g1_i1 <- c(3.34276522512501, 0.785915767258281, 10.0099609353064, 2.69320707680029, 33.9828741992774, 7.14002766676061)
-PLE_TRINITY_DN8063_c1_g1_i1 <- c(1.68292583732554, 2.92635711661422, 2.17352329159728, 0.774740001986499, 12.4658706785786, 1.87939975163101)
-PLE_TRINITY_DN8779_c1_g4_i2 <- c(6.02361490031432, 2.13692100644751, 10.3729769131239, 0.497831632604912, 22.8104338179194, 2.77413419278609)
-PLE_TRINITY_DN9848_c1_g2_i3 <- c(0.157057187688541, 0, 1.62160467011718, 3.61990164480147, 0.872834021308513, 5.66567136672498)
-
-
-
-test_chitin<-data.frame(CON_TRINITY_DN8704_c0_g1_i1,
-                        CON_TRINITY_DN6566_c2_g2_i2,
-                        CON_TRINITY_DN6428_c3_g6_i1,
-                        CON_TRINITY_DN6428_c3_g8_i1,
-                        CON_TRINITY_DN7052_c1_g1_i4,
-                        CON_TRINITY_DN8003_c0_g1_i1,
-                        CON_TRINITY_DN4507_c0_g2_i1,
-                        CON_TRINITY_DN4507_c0_g1_i1,
-                        CON_TRINITY_DN7520_c0_g6_i1,
-                        CON_TRINITY_DN5026_c0_g2_i1,
-                        CON_TRINITY_DN3461_c0_g1_i1,
-                        CON_TRINITY_DN3461_c0_g2_i1,
-                        CON_TRINITY_DN6729_c0_g9_i1,
-                        CON_TRINITY_DN6993_c4_g1_i1,
-                        CON_TRINITY_DN6882_c4_g4_i5,
-                        CON_TRINITY_DN5957_c1_g2_i1,
-                        CON_TRINITY_DN5307_c1_g2_i1,
-                        PLE_TRINITY_DN1325_c0_g1_i3,
-                        PLE_TRINITY_DN1545_c0_g1_i1,
-                        PLE_TRINITY_DN1776_c0_g2_i1,
-                        PLE_TRINITY_DN1776_c0_g3_i2,
-                        PLE_TRINITY_DN4742_c0_g4_i1,
-                        PLE_TRINITY_DN5247_c0_g1_i2,
-                        PLE_TRINITY_DN5341_c0_g3_i2,
-                        PLE_TRINITY_DN5341_c0_g4_i1,
-                        PLE_TRINITY_DN5411_c3_g2_i2,
-                        PLE_TRINITY_DN6010_c0_g1_i4,
-                        PLE_TRINITY_DN6573_c0_g2_i1,
-                        PLE_TRINITY_DN6573_c0_g3_i2,
-                        PLE_TRINITY_DN7191_c2_g1_i1,
-                        PLE_TRINITY_DN7629_c1_g1_i1,
-                        PLE_TRINITY_DN8063_c1_g1_i1,
-                        PLE_TRINITY_DN8779_c1_g4_i2,
-                        PLE_TRINITY_DN9848_c1_g2_i3
-)
-rownames(test_chitin) <- c("female flower", "leaf", "male flower", "petiole", "root", "veg bud")
-
-
-test_chitin<-as.matrix(test_chitin)
-
-pheatmap(log2(test_chitin+1), cluster_rows = TRUE, cluster_cols = FALSE)
