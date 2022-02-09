@@ -223,7 +223,7 @@ comparison_de_dataframe$plot_col<-factor(comparison_de_dataframe$plot_col, level
 
 
 
-pdf("figure2_barplot_grid_de_genes.pdf", width = 15, height = 10)
+jpeg("figure2_barplot_grid_de_genes.jpeg", width = 1080, height = 780)
 ggplot(comparison_de_dataframe, aes(x=direction, y=de_gene_counts, fill=plot_col)) + 
   geom_bar(stat = "identity", position=position_dodge()) + facet_grid(rows = vars(comparison.base), cols = vars(comparison.comp)) +
   scale_fill_manual(values=c("Red", "dodgerblue2", "orange", "lightskyblue")) +
@@ -689,7 +689,7 @@ test<-de_df_mirror %>% group_by(comparison) %>%
 de_df_mirror$comparison<-factor(de_df_mirror$comparison, levels=test)
 
 
-pdf("figure4_barplot_mirrored_enriched_terms.pdf", width = 15, height = 10)
+jpeg("figure4_barplot_mirrored_enriched_terms.jpeg", width = 1080, height = 780)
 ggplot(de_df_mirror, aes(x = comparison, y = count_mirror, fill = colour_label)) +   # Fill column
   geom_bar(stat = "identity", width = .6) +   # draw the bars
   scale_y_continuous(breaks = brks,   # Breaks
@@ -988,7 +988,7 @@ tissue_comps
 comparisons_total<-tissue_comps
 colnames(comparisons_total) <- c("test1", "test2")
 
-pdf("figure5A_con_comparison_network.pdf")
+jpeg("figure5A_con_comparison_network.jpeg", width = 1080, height = 1080)
 con_comparison_numbers<-all_con[,c("numDEInCat", "comparison")]
 con_comparison_numbers<-aggregate(numDEInCat ~ comparison, con_comparison_numbers, sum)
 con_comparison_numbers<-tidyr::separate(con_comparison_numbers, comparison, into = c("test1", "test2"), sep = " vs ",)
@@ -996,12 +996,12 @@ con_comparison_numbers<-right_join(con_comparison_numbers, comparisons_total)
 colnames(con_comparison_numbers)<-c("from", "to", "d")
 m <- dodgr_dists(con_comparison_numbers)
 m <- as.matrix(m)
-qgraph(m,edge.labels=TRUE)
+qgraph(m,edge.labels=TRUE, edge.label.color='black')
 dev.off()
 
 
 
-pdf("figure5B_ple_comparison_network.pdf")
+jpeg("figure5B_ple_comparison_network.jpeg", width = 1080, height = 1080)
 ple_comparison_numbers<-all_ple[,c("numDEInCat", "comparison")]
 ple_comparison_numbers<-aggregate(numDEInCat ~ comparison, ple_comparison_numbers, sum)
 ple_comparison_numbers<-tidyr::separate(ple_comparison_numbers, comparison, into = c("test1", "test2"), sep = " vs ",)
@@ -1009,7 +1009,7 @@ ple_comparison_numbers<-right_join(ple_comparison_numbers, comparisons_total)
 colnames(ple_comparison_numbers)<-c("from", "to", "d")
 m <- dodgr_dists(ple_comparison_numbers)
 m <- as.matrix(m)
-qgraph(m,edge.labels=TRUE)
+qgraph(m,edge.labels=TRUE, edge.label.color='black')
 dev.off()
  ############################
 
@@ -1017,7 +1017,7 @@ dev.off()
 
 
 # do it by species, remove direction altogether as it doesnt add much and mnakes the graphs look weird
-pdf("figure6_con_de_category_barplot.pdf", width = 20, height = 14)
+jpeg("figure6_con_de_category_barplot.jpeg", width = 1280, height = 980)
 ggplot(all_con, aes(x=go_term, y=log(numDEInCat), fill=comparison)) + 
   labs(x = "GO term", y = "Log(Number DE in Category)") +
   geom_bar(stat="identity", width = 0.7) + coord_flip() + theme(legend.text=element_text(size=15),
@@ -1030,7 +1030,7 @@ ggplot(all_con, aes(x=go_term, y=log(numDEInCat), fill=comparison)) +
 
 dev.off()
 
-pdf("figure7_ple_de_category_barplot.pdf", width = 20, height = 14)
+jpeg("figure7_ple_de_category_barplot.jpeg", width = 1280, height = 1080)
 ggplot(all_ple, aes(x=go_term, y=log(numDEInCat), fill=comparison)) + 
   geom_bar(stat="identity", position = "dodge") + coord_flip() +
   labs(x = "GO term", y = "Log(Number DE in Category)") +
