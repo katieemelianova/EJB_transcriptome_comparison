@@ -61,7 +61,7 @@ stuff$uniqueness <- as.numeric( as.character(stuff$uniqueness) );
 stuff$dispensability <- as.numeric( as.character(stuff$dispensability) );
 
 # by default, outputs to a PDF file
-pdf( file="figure8_revigo_treemap_plebeja.pdf", width=16, height=9 ) # width and height are in inches
+jpeg( file="figure9_revigo_treemap_plebeja.jpeg", width = 1280, height = 880  ) # width and height are in inches
 
 # check the tmPlot command documentation for all possible parameters - there are a lot more
 treemap(
@@ -77,7 +77,7 @@ treemap(
 								 # "#CCCCCC00" is fully transparent, "#CCCCCCAA" is semi-transparent grey, NA is opaque
   position.legend = "none",
   align.labels = list(c("left", "top"), c("center", "center")),
-  fontsize.labels = c(18, 15)
+  fontsize.labels = c(19, 17)
 )
 
 dev.off()
